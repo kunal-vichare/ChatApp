@@ -1,19 +1,20 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native'
-import Login from './src/screen/Authentication/Login'
-import Signup from './src/screen/Authentication/Signup'
-
-const Stack = createStackNavigator();
+import AuthStack from './src/navigation/AuthStack'
+import MainTab from './src/navigation/MainTab'
+import {useSelector} from 'react-redux'
 
 const App = () => {
+  const isLogged = useSelector((state)=>state.auth.isLogged);
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="LoginScreen" component={Login} />
-        <Stack.Screen name="SignupScreen" component={Signup} />
-      </Stack.Navigator>
+      {
+        isLogged?
+        <MainTab/>
+        :
+        <AuthStack/>
+      }
     </NavigationContainer>
   )
 }
