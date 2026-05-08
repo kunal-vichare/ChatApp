@@ -13,6 +13,10 @@ const Signup = () => {
     })
 
     const handleRegister = async ()=> {
+        if (!signup.email || !signup.password) {
+            Alert.alert("Error","Please fill all the fields")
+            return;
+        }
         if (signup.password!==signup.confirmPassword) {
             Alert.alert('Error','Password not match');
             return;

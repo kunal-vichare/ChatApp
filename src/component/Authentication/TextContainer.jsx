@@ -3,13 +3,10 @@ import React from 'react'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { TextInput } from 'react-native-paper'
 import { colors, fontFamily, fontSize, fontWeight, gap, padding } from '../../constant';
-import { useDispatch } from 'react-redux';
-import {login} from '../../redux/slice/auth'
 
-const TextContainer = ({formData,setFormData,type,handleRegister}) => {
+const TextContainer = ({formData,setFormData,type,handleRegister,handleSignin}) => {
     const signup = type==="signup";
     const navigation = useNavigation();
-    const dispatch = useDispatch();
   return (
 <View style={styles.textContainer}>
                 <View style={styles.textIpContainer}>
@@ -89,7 +86,7 @@ const TextContainer = ({formData,setFormData,type,handleRegister}) => {
                         :
                         <TouchableOpacity
                         style={styles.btn}
-                        onPress={()=>dispatch(login())}
+                        onPress={()=>handleSignin()}
                         >
                         <Text
                             style={styles.btnText}
