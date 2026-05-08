@@ -24,6 +24,7 @@ export const fontSize = {
 };
 
 export const padding = {
+  xxxs:5,
   xxs: 8,
   xs: 10,
   sm: 12,
@@ -51,6 +52,7 @@ export const padding = {
 };
 
 export const margin = {
+  xxxs:5,
   xxs: 8,
   xs: 10,
   sm: 12,
@@ -73,7 +75,8 @@ export const fontWeight = {
     regular : '500',
     highlight : '600',
     bold : '700',
-    exBold : '800'
+    exBold : '800',
+    max:'900'
 };
 
 export const gap = {
@@ -104,4 +107,8 @@ export const radius = {
 
 export const length = {
   btn : 100
+};
+
+export const borderWidth = {
+  one:1
 }
