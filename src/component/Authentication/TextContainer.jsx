@@ -6,9 +6,8 @@ import { colors, fontFamily, fontSize, fontWeight, gap, padding } from '../../co
 import { useDispatch } from 'react-redux';
 import {login} from '../../redux/slice/auth'
 
-const TextContainer = () => {
-    const route = useRoute();
-    const signup = route.params?.signup;
+const TextContainer = ({formData,setFormData,type,handleRegister}) => {
+    const signup = type==="signup";
     const navigation = useNavigation();
     const dispatch = useDispatch();
   return (
@@ -16,6 +15,13 @@ const TextContainer = () => {
                 <View style={styles.textIpContainer}>
                     <TextInput
                         label='Email'
+                        value={formData.email}
+                        onChangeText={(text)=>
+                            setFormData(prev=>({
+                                ...prev,
+                                email:text
+                            }))
+                        }
                         style={styles.textInput}
                         mode='outlined'
                         activeOutlineColor={colors.title}
@@ -24,6 +30,13 @@ const TextContainer = () => {
                 <View style={styles.textIpContainer}>
                     <TextInput
                         label='Password'
+                        value={formData.password}
+                        onChangeText={(text)=>{
+                            setFormData(prev=>({
+                                ...prev,
+                                password:text
+                            }))
+                        }}
                         style={styles.textInput}
                         mode='outlined'
                         activeOutlineColor={colors.title}
@@ -33,6 +46,13 @@ const TextContainer = () => {
                 <View style={styles.textIpContainer}>
                     <TextInput
                         label='Confirm Password'
+                        value={formData.confirmPassword}
+                        onChangeText={(text)=>
+                            setFormData((prev)=>({
+                                ...prev,
+                                confirmPassword:text
+                            }))
+                        }
                         style={styles.textInput}
                         mode='outlined'
                         activeOutlineColor={colors.title}
@@ -58,6 +78,7 @@ const TextContainer = () => {
                         signup?
                     <TouchableOpacity
                         style={styles.btn}
+                        onPress={()=>handleRegister()}
                     >
                         <Text
                             style={styles.btnText}
@@ -83,7 +104,7 @@ const TextContainer = () => {
                         signup?
                     <TouchableOpacity
                         style={styles.createBtn}
-                        onPress={()=>navigation.goBack()}
+                        onPress={()=>navigation.replace("LoginScreen")}
                     >
                         <Text
                             style={styles.createBtnText}
@@ -94,7 +115,7 @@ const TextContainer = () => {
                     :
                     <TouchableOpacity
                         style={styles.createBtn}
-                        onPress={()=>navigation.goBack()}
+                        onPress={()=>navigation.replace("SignupScreen")}
                     >
                         <Text
                             style={styles.createBtnText}

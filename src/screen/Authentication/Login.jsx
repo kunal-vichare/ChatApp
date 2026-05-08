@@ -1,14 +1,22 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import React from 'react'
+import React, { use, useState } from 'react'
 import { colors, fontFamily, fontSize, fontWeight, padding } from '../../constant';
 import TextContainer from '../../component/Authentication/TextContainer'
 import Footer from '../../component/Authentication/Footer'
 const Login = () => {
+    const [login,setLogin]=useState({
+        email:'',
+        password:''
+    });
     return (
         <View style={styles.container}>
             <Text style={styles.loginText}>Login here</Text>
             <Text style={styles.welcomeText}>Welcome back you've been missed!</Text>
-            <TextContainer/>
+            <TextContainer
+                type="signin"
+                formData={login}
+                setFormData={setLogin}
+            />
             <Footer/>
         </View>
     )

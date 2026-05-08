@@ -25,7 +25,7 @@ const Welcome = () => {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.btn}
-          onPress={()=>navigation.navigate("SignupScreen",{signup:true})}
+          onPress={()=>navigation.navigate("SignupScreen")}
         >
           <Text style={styles.btnText}>
             Register
