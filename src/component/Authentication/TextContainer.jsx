@@ -12,6 +12,7 @@ const TextContainer = ({formData,setFormData,type,handleRegister,handleSignin}) 
                 <View style={styles.textIpContainer}>
                     <TextInput
                         label='Email'
+                        keyboardType='email-address'
                         value={formData.email}
                         onChangeText={(text)=>
                             setFormData(prev=>({

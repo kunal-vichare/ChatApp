@@ -10,5 +10,7 @@ export const colors = {
     inactiveTab:'black',
     message:'#889095',
     time:'#026500',
-    countBack:'#036A01'
+    countBack:'#036A01',
+    headerBack:'#008069',
+    chatBack:'#ECE5DD'
 }

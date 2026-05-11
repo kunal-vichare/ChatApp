@@ -2,10 +2,18 @@ import { View, Text, TouchableOpacity,Image } from 'react-native'
 import React from 'react'
 import { StyleSheet } from 'react-native'
 import { colors, fontFamily, fontSize, fontWeight, margin, padding } from '../../../constant'
+import { useNavigation } from '@react-navigation/native'
 
 const FlatlistRender = ({item}) => {
+    const navigation = useNavigation();
   return (
-    <TouchableOpacity style={styles.btn}>
+    <TouchableOpacity 
+        style={styles.btn}
+        onPress={()=>navigation.navigate("AppStack",{
+            screen:"ChatScreen",
+            params: { item: item },
+        })}
+    >
         <View style={styles.leftContainer}>
             <Image source={require("../../../assets/image/Pic.jpg")} style={styles.image}/>
             <View style={styles.msgContainer}>

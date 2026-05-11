@@ -1,6 +1,6 @@
 import React from 'react'
 import { createStackNavigator } from '@react-navigation/stack';
-import {AllUser} from '../screen/AppStack'
+import {AllUser,Chat} from '../screen/AppStack'
 
 const Stack = createStackNavigator();
 
@@ -12,6 +12,13 @@ const AppStack = () => {
             component={AllUser}
             options={()=>({
                 headerShown:false
+            })}
+        />
+        <Stack.Screen 
+            name="ChatScreen" 
+            component={Chat}
+            options={()=>({
+                headerShown:false,
             })}
         />
       </Stack.Navigator>
