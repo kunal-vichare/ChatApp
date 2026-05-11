@@ -4,6 +4,7 @@ import { colors, fontFamily, fontSize, fontWeight, padding } from '../../constan
 import TextContainer from '../../component/Authentication/TextContainer'
 import Footer from '../../component/Authentication/Footer'
 import {registerUser} from '../../services/auth'
+import {addUserData} from '../../database/firestoreCRUD'
 
 const Signup = () => {
     const [signup,setSignup]=useState({

@@ -1,13 +1,13 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import {Chats,Updates,Calls} from '../screen/MainTab'
+import {Chats,Updates,Calls} from '../screen/MainStack'
 import Icon from 'react-native-vector-icons/Ionicons'
 import { borderWidth, colors, fontFamily, fontSize, fontWeight, margin, padding } from '../constant';
 
 const Tab = createBottomTabNavigator();
 
-const MainTab = () => {
+const BottomTab = () => {
     const getTabBarIcon = (routeName, focused, color, size) => {
     let iconName;
     // console.log(routeName,focused,color,size);
@@ -82,4 +82,4 @@ const MainTab = () => {
   )
 }
 
-export default MainTab
+export default BottomTab

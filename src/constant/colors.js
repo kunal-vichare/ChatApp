@@ -7,5 +7,8 @@ export const colors = {
     wp:'#25d366',
     textIpBack:'#F0F2F5',
     activeTab:'#007bff',
-    inactiveTab:'black'
+    inactiveTab:'black',
+    message:'#889095',
+    time:'#026500',
+    countBack:'#036A01'
 }
