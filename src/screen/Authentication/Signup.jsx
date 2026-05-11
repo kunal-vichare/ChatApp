@@ -22,7 +22,13 @@ const Signup = () => {
             return;
         }
         try {
-            await registerUser(signup.email,signup.password);
+            const user = await registerUser(signup.email,signup.password);
+
+            await addUserData({
+                uid: user.uid,
+                email: user.email,
+                name: signup.email,
+            });
             Alert.alert('Success','A verification email has been sent to your email address');
             setSignup({
                 email:'',
