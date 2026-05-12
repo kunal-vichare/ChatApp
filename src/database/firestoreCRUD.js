@@ -6,7 +6,7 @@ export const addUserData = async(user) => {
             uid: user.uid,
             email: user.email,
             name: user.name,
-            profileImage: '',
+            profileImage: 'https://static.vecteezy.com/system/resources/thumbnails/009/734/564/small/default-avatar-profile-icon-of-social-media-user-vector.jpg',
             about: 'Available',
             lastSeen: Date.now(),
             isOnline: true,

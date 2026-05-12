@@ -1,23 +1,24 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar } from 'react-native'
+import { View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native'
 import React from 'react'
-import BackIcon from '../../../assets/svg/Back'
-import VideoIcon from '../../../assets/svg/VideoIcon'
-import CallIcon from '../../../assets/svg/CallIcon'
-import MenuIcon from '../../../assets/svg/MenuIcon'
-import { useRoute } from '@react-navigation/native'
-import { colors, fontFamily, fontSize, fontWeight, padding } from '../../../constant'
+import { useNavigation, useRoute } from '@react-navigation/native'
+import { colors, fontFamily, fontSize, fontWeight, iconSize, padding } from '../../../constant'
+import VectorIcon from '../../../utils/VectorIcons'
 const ChatHeader = () => {
     const route = useRoute();
     const item = route.params?.item;
+    const navigation = useNavigation();
     return (
         <View style={styles.container}>
-            <StatusBar         
-                backgroundColor={colors.headerBack}
-                barStyle="light-content" 
-            />
             <View style={styles.firstContainer}>
                 <View style={{ paddingHorizontal: 10 }}>
-                    <BackIcon />
+                    {/* <BackIcon /> */}
+                    <VectorIcon 
+                        type="Ionicons"
+                        name="arrow-back"
+                        size={iconSize.xxl}
+                        color={colors.primary}
+                        onPress={()=>navigation.goBack()}
+                    />
                 </View>
                 <Image source={require("../../../assets/image/Pic.jpg")} style={styles.img} />
                 <View style={styles.textContainer}>
@@ -31,13 +32,28 @@ const ChatHeader = () => {
             </View>
             <View style={styles.secondContainer}>
                 <TouchableOpacity>
-                    <VideoIcon />
+                    <VectorIcon 
+                        type="Ionicons"
+                        name="videocam"
+                        size={iconSize.xxl}
+                        color={colors.primary}
+                    />                    
                 </TouchableOpacity>
                 <TouchableOpacity>
-                    <CallIcon />
+                    <VectorIcon 
+                        type="FontAwesome5"
+                        name="phone-alt"
+                        size={iconSize.xxl}
+                        color={colors.primary}
+                    />
                 </TouchableOpacity>
                 <TouchableOpacity>
-                    <MenuIcon />
+                    <VectorIcon 
+                        type="Entypo"
+                        name="dots-three-vertical"
+                        size={iconSize.xxl}
+                        color={colors.primary}
+                    />
                 </TouchableOpacity>
             </View>
         </View>
@@ -56,7 +72,8 @@ const styles = StyleSheet.create({
         width: 54,
         resizeMode: 'contain',
         borderRadius: 27,
-        marginVertical:10
+        marginTop:20,
+        marginBottom:10
     },
     firstContainer: {
         flexDirection: 'row',

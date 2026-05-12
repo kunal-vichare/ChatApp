@@ -12,5 +12,12 @@ export const colors = {
     time:'#026500',
     countBack:'#036A01',
     headerBack:'#008069',
-    chatBack:'#ECE5DD'
+    chatBack:'#ECE5DD',
+    tertiary: '#0aad93',
+    teal: '#36897f',
+    background: '#101d25',
+    blue: '#34b7f1',
+    textColor: '#cdd4da',
+    textGrey: '#8b959a',
+    red: '#e53f43',
 }

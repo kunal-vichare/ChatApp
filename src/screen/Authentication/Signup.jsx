@@ -8,6 +8,7 @@ import {addUserData} from '../../database/firestoreCRUD'
 
 const Signup = () => {
     const [signup,setSignup]=useState({
+        name:'',
         email:'',
         password:'',
         confirmPassword:''
@@ -28,7 +29,7 @@ const Signup = () => {
             await addUserData({
                 uid: user.uid,
                 email: user.email,
-                name: signup.email,
+                name: signup.name,
             });
             Alert.alert('Success','A verification email has been sent to your email address');
             setSignup({

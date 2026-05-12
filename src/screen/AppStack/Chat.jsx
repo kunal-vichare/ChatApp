@@ -1,14 +1,30 @@
-import { View, Text } from 'react-native'
+import { View, Text,StatusBar, ImageBackground, StyleSheet } from 'react-native'
 import React from 'react'
-import { ChatHeader,FlatList,TypeBox } from '../../component/MainTab/Chats'
+import { ChatHeader, FlatList, TypeBox,ChatBody} from '../../component/MainTab/Chats'
+import { colors } from '../../constant'
+import WpWallpaper from '../../assets/image/wpBackground.png'
 
 const Chat = () => {
   return (
-    <View style={{flex:1}}>
-        <ChatHeader/>
-        <TypeBox/>
+    <View style={{ flex: 1 }}>
+      <StatusBar
+        backgroundColor={colors.headerBack}
+        barStyle="light-content"
+      />
+      <ChatHeader />
+      <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
+        <ChatBody/>
+      </ImageBackground>
+      <TypeBox />
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  wpWallpaper:{
+   flex:1,
+   resizeMode:'contain'
+  }
+})
 
 export default Chat

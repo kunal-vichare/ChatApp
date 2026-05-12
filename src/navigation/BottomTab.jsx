@@ -1,9 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import {Chats,Updates,Calls} from '../screen/MainStack'
+import {Chats,Status,Calls,Community} from '../screen/MainStack'
 import Icon from 'react-native-vector-icons/Ionicons'
 import { borderWidth, colors, fontFamily, fontSize, fontWeight, margin, padding } from '../constant';
+import VectorIcon from '../utils/VectorIcons';
 
 const Tab = createBottomTabNavigator();
 
@@ -15,7 +16,10 @@ const BottomTab = () => {
     if (routeName === 'ChatsScreen') {
       iconName = focused ? 'chatbox-ellipses' : 'chatbox-ellipses-outline'
     }
-    else if (routeName === 'UpdatesScreen') {
+    else if (routeName === 'CommunityScreen') {
+      iconName = focused ? 'people' : 'people-outline'
+    }
+    else if (routeName === 'StatusScreen') {
       iconName = focused ? 'people' : 'people-outline'
     }
     else if (routeName === 'CallsScreen') {
@@ -65,10 +69,17 @@ const BottomTab = () => {
       }} 
       />
       <Tab.Screen 
-      name="UpdatesScreen" 
-      component={Updates} 
+      name="StatusScreen" 
+      component={Status} 
       options={{ 
-        tabBarLabel: 'Updates'
+        tabBarLabel: 'Status'
+      }} 
+      />
+      <Tab.Screen 
+      name="CommunityScreen" 
+      component={Community} 
+      options={{ 
+        tabBarLabel: 'Community',
       }} 
       />
       <Tab.Screen 

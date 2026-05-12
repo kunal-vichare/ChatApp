@@ -23,6 +23,25 @@ export const fontSize = {
   headingXl: 56,
 };
 
+export const iconSize = {
+  xxs: 8,
+  xs: 10,
+  sm: 12,
+  base: 14,
+  md: 16,
+  regular: 18,
+  lg: 20,
+  xl: 22,
+  xxl: 24,
+  xxxl: 26,
+
+  titleXs: 28,
+  titleSm: 30,
+  titleMd: 32,
+  titleLg: 34,
+  titleXl: 36,
+}
+
 export const padding = {
   xxxs:5,
   xxs: 8,

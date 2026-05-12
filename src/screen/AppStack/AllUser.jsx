@@ -1,11 +1,31 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import { FlatList } from '../../component/MainTab/Chats'
+import { View, Text, FlatList } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { getUsers } from '../../database/firestoreCRUD';
+import AllUserFlatlistData from '../../component/AppStack/AllUserFlatlistData'
 
 const AllUser = () => {
+  const [users,setUsers]=useState([]);
+
+  useEffect(()=>{
+    fetchUser();
+  },[]);
+
+  const fetchUser=async()=>{
+    const data = await getUsers();
+    if (data) {
+      setUsers(data);
+    }
+  }
   return (
     <View>
-      <FlatList/>
+      
+      <FlatList 
+        data={users}
+        keyExtractor={(item)=>item.id}
+        renderItem={({ item }) => (
+          <AllUserFlatlistData item={item} />
+        )}
+      />
     </View>
   )
 }

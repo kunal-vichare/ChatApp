@@ -1,8 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
-import Menu from 'react-native-vector-icons/Entypo'
-import Camera from 'react-native-vector-icons/Feather'
 import { colors, fontSize, fontWeight, gap, padding } from '../../../constant'
+import VectorIcons from '../../../utils/VectorIcons'
 
 const Header = () => {
   return (
@@ -13,19 +12,19 @@ const Header = () => {
             style={styles.btn}
             onPress={()=>console.log("Button Pressed")}        
         >
-            <Menu name ="add-user" size={fontSize.xl} />
+            <VectorIcons type="Entypo" name="add-user" size={fontSize.xl}/>
         </TouchableOpacity>
         <TouchableOpacity
             style={styles.btn}
             onPress={()=>console.log("Button Pressed")}        
         >
-            <Camera name ="camera" size={fontSize.xl} />
+            <VectorIcons type="Feather" name="camera" size={fontSize.xl}/>
         </TouchableOpacity>
         <TouchableOpacity
             style={styles.btn}
             onPress={()=>console.log("Button Pressed")}        
         >
-            <Menu name ="dots-three-vertical" size={fontSize.xl} />
+            <VectorIcons type="Entypo" name="dots-three-vertical" size={fontSize.xl}/>
         </TouchableOpacity>
       </View>
     </View>
@@ -36,7 +35,7 @@ const styles = StyleSheet.create({
     container : {
         flexDirection:'row',
         justifyContent:'space-between',
-        paddingVertical:padding.xs,
+        paddingVertical:padding.regular,
         paddingHorizontal:padding.xs,
         alignItems:'center'
     },

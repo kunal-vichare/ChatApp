@@ -9,6 +9,23 @@ const TextContainer = ({formData,setFormData,type,handleRegister,handleSignin}) 
     const navigation = useNavigation();
   return (
 <View style={styles.textContainer}>
+                { signup &&
+                <View style={styles.textIpContainer}>
+                    <TextInput
+                        label='Enter Name'
+                        value={formData.name}
+                        onChangeText={(text)=>
+                            setFormData((prev)=>({
+                                ...prev,
+                                name:text
+                            }))
+                        }
+                        style={styles.textInput}
+                        mode='outlined'
+                        activeOutlineColor={colors.title}
+                    />
+                </View>
+                }
                 <View style={styles.textIpContainer}>
                     <TextInput
                         label='Email'
