@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
 
     },
     loginText: {
-        paddingTop: padding.headingLg,
+        paddingTop: padding.headingS,
         textAlign: 'center',
         fontFamily: fontFamily.popinsBold,
         fontSize: fontSize.titleSm,
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     welcomeText: {
         paddingHorizontal: padding.bigS,
         textAlign: 'center',
-        paddingTop: padding.xxl,
+        paddingTop: padding.base,
         fontFamily: fontFamily.popinsMedium,
         fontWeight: fontWeight.highlight,
         fontSize: fontSize.lg

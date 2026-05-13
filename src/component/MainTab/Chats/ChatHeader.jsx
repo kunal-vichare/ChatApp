@@ -3,10 +3,18 @@ import React from 'react'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { colors, fontFamily, fontSize, fontWeight, iconSize, padding } from '../../../constant'
 import VectorIcon from '../../../utils/VectorIcons'
-const ChatHeader = () => {
-    const route = useRoute();
-    const item = route.params?.item;
+import firestore from '@react-native-firebase/firestore';
+
+const ChatHeader = ({userId}) => {
     const navigation = useNavigation();
+
+    const getUserDetails=async()=>{
+        const usersSnapshot = await firestore().collection('users').get();
+        console.log("UserSnapshot",usersSnapshot);
+
+    }
+    // getUserDetails();
+
     return (
         <View style={styles.container}>
             <View style={styles.firstContainer}>

@@ -2,7 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import React from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { TextInput } from 'react-native-paper'
-import { colors, fontFamily, fontSize, fontWeight, gap, padding } from '../../constant';
+import { colors, fontFamily, fontSize, fontWeight, gap, padding, radius } from '../../constant';
+import VectorIcon from '../../utils/VectorIcons';
 // import {Facebook} from '../../assets/svg/Facebook'
 
 const Footer = () => {
@@ -14,26 +15,29 @@ const Footer = () => {
                     <TouchableOpacity
                         style={styles.footerBtn}
                     >
-                        <Text>
-                            Hello
-                        </Text>
-                        {/* <Facebook/> */}
+                        <VectorIcon
+                        type="AntDesign"
+                        name="google"
+                        size={30}
+                        />
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.footerBtn}
                     >
-                        <Text>
-                            Hello
-                        </Text>
-                        {/* <Google/> */}
+                        <VectorIcon
+                        type="Entypo"
+                        name="facebook"
+                        size={30}
+                        />
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.footerBtn}
                     >
-                        <Text>
-                            Hello
-                        </Text>
-                        {/* <Google/> */}
+                        <VectorIcon
+                        type="FontAwesome"
+                        name="apple"
+                        size={30}
+                        />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -111,7 +115,7 @@ const styles = StyleSheet.create({
         color: colors.createAcc
     },
     footerContainer: {
-        paddingTop: padding.headingXs,
+        paddingTop: padding.xxxl,
         alignItems: 'center'
         // paddingHorizontal:114
     },
@@ -132,7 +136,8 @@ const styles = StyleSheet.create({
     footerBtn: {
         backgroundColor: colors.footerBtnBack,
         paddingVertical: padding.xs,
-        paddingHorizontal: padding.regular
+        paddingHorizontal: padding.regular,
+        borderRadius:radius.xs
     }
 })
 

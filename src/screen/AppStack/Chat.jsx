@@ -16,9 +16,9 @@ const Chat = () => {
         backgroundColor={colors.headerBack}
         barStyle="light-content"
       />
-      <ChatHeader />
+      <ChatHeader userId={userId}/>
       <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
-        <ChatBody/>
+        <ChatBody userId={userId}/>
       </ImageBackground>
       <TypeBox />
     </View>

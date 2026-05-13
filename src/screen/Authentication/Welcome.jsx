@@ -8,7 +8,7 @@ const Welcome = () => {
   return (
     <View style={styles.container}>
       <View style={styles.imgContainer}>
-      <Image source={require("../../assets/image/WelcomeImg.png")} style={styles.img}/>
+      <Image source={require("../../assets/image/WelcomePhoto.png")} style={styles.img}/>
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.headerText}>Chat Smarter, Not Harder</Text>
