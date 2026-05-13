@@ -1,6 +1,7 @@
 import React from 'react'
 import { createStackNavigator } from '@react-navigation/stack';
-import {AllUser,Chat} from '../screen/AppStack'
+import {AllUser,Chat,StatusScreen} from '../screen/AppStack'
+import { colors } from '../constant';
 
 const Stack = createStackNavigator();
 
@@ -11,12 +12,20 @@ const AppStack = () => {
             name="AllUserScreen" 
             component={AllUser}
             options={()=>({
-                headerShown:false
+                headerShown:false,
+                cardStyle:{backgroundColor:colors.primary}
             })}
         />
         <Stack.Screen 
             name="ChatScreen" 
             component={Chat}
+            options={()=>({
+                headerShown:false,
+            })}
+        />
+        <Stack.Screen 
+            name="StatusScreen" 
+            component={StatusScreen}
             options={()=>({
                 headerShown:false,
             })}

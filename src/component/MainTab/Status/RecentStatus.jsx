@@ -2,8 +2,10 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import React from 'react';
 import { colors } from '../../../constant';
 import { RecentStatusData } from '../../../data/RecentStatusData'
+import { useNavigation } from '@react-navigation/native';
 
 const RecentStatus = () => {
+  const navigation=useNavigation();
 
   return (
     <View>
@@ -11,7 +13,12 @@ const RecentStatus = () => {
       {
         RecentStatusData.map(item => (
           <>
-            <TouchableOpacity style={styles.storySection}>
+            <TouchableOpacity 
+              style={styles.storySection}
+              onPress={()=>navigation.navigate("AppStack",{
+                screen:"StatusScreen"
+              })}
+            >
               <View style={styles.imgStory}>
                 <Image source={item.storyImg} style={styles.statusStyle} />
               </View>

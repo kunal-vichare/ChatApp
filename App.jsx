@@ -15,7 +15,7 @@ const App = () => {
         barStyle="dark-content" 
       />
       {
-        !isLogged?
+        isLogged?
         <MainStack/>
         :
         <AuthStack/>
