@@ -38,7 +38,8 @@ const Welcome = () => {
 
 const styles = StyleSheet.create({
   container:{
-    flex:flex.one
+    flex:flex.one,
+    paddingTop:padding.headingS
   },
   imgContainer:{
     marginHorizontal:margin.xxxl,
@@ -46,8 +47,8 @@ const styles = StyleSheet.create({
   },
   img:{
     resizeMode:'contain',
-    height:300,
-    width:300
+    height:length.wlcImg,
+    width:length.wlcImg
   },
   textContainer:{
     justifyContent:'center',
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     paddingHorizontal:padding.lg,
     borderRadius:radius.xs,
     backgroundColor:colors.title,
-    minWidth:125,
+    minWidth:length.otf,
     alignItems:'center',
     justifyContent:'center'
   },

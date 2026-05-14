@@ -123,10 +123,13 @@ export const radius = {
   xl: 22,
   xxl: 24,
   xxxl: 26,   
+  fifty : 50
 };
 
 export const length = {
-  btn : 100
+  btn : 100,
+  wlcImg : 300,
+  otf :125
 };
 
 export const borderWidth = {

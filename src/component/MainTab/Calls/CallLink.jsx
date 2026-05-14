@@ -1,7 +1,7 @@
 import {View, Text, StyleSheet} from 'react-native';
 import React from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
-import { colors } from '../../../constant';
+import { colors, fontSize, fontWeight, iconSize, margin, radius } from '../../../constant';
 
 const CallLink = () => {
   return (
@@ -10,7 +10,7 @@ const CallLink = () => {
         <VectorIcon
           name="link"
           type="Fontisto"
-          size={20}
+          size={iconSize.lg}
           color={colors.primary}
         />
       </View>
@@ -32,22 +32,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.tertiary,
     height: 45,
     width: 45,
-    borderRadius: 50,
+    borderRadius: radius.fifty,
     justifyContent: 'center',
     alignItems: 'center',
   },
   callLink: {
-    fontSize: 15,
+    fontSize: fontSize.md,
     color: colors.secondary,
-    fontWeight: '500',
+    fontWeight: fontWeight.regular,
   },
   shareLink: {
-    fontSize: 13,
+    fontSize: fontSize.base,
     color: colors.textGrey,
     marginTop: 3,
   },
   linkSection: {
-    marginLeft: 15,
+    marginLeft: margin.base,
   },
 });
 
