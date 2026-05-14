@@ -45,3 +45,28 @@ export const deleteUser = async(id) => {
         console.log("Error deleting user data: ",error);
     }
 }
+
+export const getOrCreateChatroom = async (myUid, otherUid) => {
+  const chatroomId = [myUid, otherUid].sort().join('_');
+  const ref = firestore().collection('chats').doc(chatroomId);
+  await ref.set({
+    participants: [myUid, otherUid],
+    lastMessage: '',
+    updatedAt: Date.now(),
+  }, { merge: true });
+  return chatroomId;
+};
+
+export const sendMessage = async (chatroomId, text, senderId) => {
+  const msgRef = firestore()
+    .collection('chats')
+    .doc(chatroomId)
+    .collection('messages')
+    .doc();
+  await msgRef.set({ text, senderId, timestamp: Date.now() });
+  // also update lastMessage on the parent doc
+  await firestore().collection('chats').doc(chatroomId).update({
+    lastMessage: text,
+    updatedAt: Date.now(),
+  });
+};

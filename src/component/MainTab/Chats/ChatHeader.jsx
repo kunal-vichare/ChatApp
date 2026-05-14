@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { colors, fontFamily, fontSize, fontWeight, iconSize, padding } from '../../../constant'
 import VectorIcon from '../../../utils/VectorIcons'
@@ -7,13 +7,43 @@ import firestore from '@react-native-firebase/firestore';
 
 const ChatHeader = ({userId}) => {
     const navigation = useNavigation();
+    console.log("UserId in chatHeader: ",userId);
+    const [userData,setUserData]=useState(null);
 
+    useEffect(()=>{
+        getUserDetails();
+    },[userId]);
+    
     const getUserDetails=async()=>{
-        const usersSnapshot = await firestore().collection('users').get();
-        console.log("UserSnapshot",usersSnapshot);
-
+        try {
+            const usersSnapshot = await firestore().collection('users').doc(userId).get();
+            console.log("UserSnapshot",usersSnapshot.data());
+            setUserData(usersSnapshot.data());            
+        } catch (error) {
+            console.log("Error: ",error);
+        }
     }
-    // getUserDetails();
+
+    function formatWhatsAppLastSeen(timestampMs) {
+        const date = new Date(timestampMs);
+        const now = new Date();
+    
+    // Reset hours to compare calendar days
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const timeString = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    
+    if (date >= today) {
+        return `last seen today at ${timeString}`;
+    } else if (date >= yesterday) {
+        return `last seen yesterday at ${timeString}`;
+    } else {
+        const dateString = date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+        return `last seen on ${dateString} at ${timeString}`;
+    }
+}
 
     return (
         <View style={styles.container}>
@@ -28,14 +58,27 @@ const ChatHeader = ({userId}) => {
                         onPress={()=>navigation.goBack()}
                     />
                 </View>
-                <Image source={require("../../../assets/image/Pic.jpg")} style={styles.img} />
+                <Image source={{uri:userData?.profileImage}} style={styles.img} />
                 <View style={styles.textContainer}>
-                    <Text style={styles.name}>
-                        Kunal Vichare
+                    <Text 
+                        style={styles.name}
+                    >
+                        {userData?.name}
                     </Text>
+                    {
+                        userData?.isOnline? 
                     <Text style={styles.status}>
-                        Online
+                       Online
                     </Text>
+                    :
+                    <Text style={styles.status}                         ellipsizeMode='tail'
+                    numberOfLines={1}
+                    >
+                        {
+                            formatWhatsAppLastSeen(userData?.lastSeen)
+                        }     
+                    </Text>
+                    }
                 </View>
             </View>
             <View style={styles.secondContainer}>
@@ -73,7 +116,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.headerBack,
         flexDirection: 'row',
         justifyContent:'space-between',
-        alignItems:'center'
+        alignItems:'center',
+        paddingTop:30
     },
     img: {
         height: 54,
@@ -95,6 +139,7 @@ const styles = StyleSheet.create({
     },
     textContainer: {
         paddingLeft: padding.base,
+        maxWidth:175
     },
     name: {
         fontWeight: fontWeight.bold,

@@ -5,36 +5,40 @@ import TextContainer from '../../component/Authentication/TextContainer'
 import Footer from '../../component/Authentication/Footer'
 import { useDispatch } from 'react-redux';
 import { loginUser } from '../../services/auth';
-import {setLoginUser} from '../../redux/slice/auth'
+import { setLoginUser } from '../../redux/slice/auth'
 
 const Login = () => {
     const dispatch = useDispatch();
-    const [login,setLogin]=useState({
-        email:'',
-        password:''
+    const [login, setLogin] = useState({
+        email: '',
+        password: ''
     });
 
-    const handleSignin = async() => {
+    const handleSignin = async () => {
         if (!login.email || !login.password) {
-            Alert.alert("Error","Please fill all the fields")
+            Alert.alert("Error", "Please fill all the fields")
             return;
         }
         try {
-            const {user,emailVerified} = await loginUser(login.email,login.password);
-            console.log("emailVerified",emailVerified);
-            
+            const { user, emailVerified } = await loginUser(login.email, login.password);
+            console.log("emailVerified", emailVerified);
+
             if (emailVerified) {
-                Alert.alert('Success','You are logged in');
+                Alert.alert('Success', 'You are logged in');
                 setLogin({
-                    email:'',
-                    password:''
+                    email: '',
+                    password: ''
                 })
-                dispatch(setLoginUser());
-            }else{
-                Alert.alert('Error','Email is not verified');
+                dispatch(setLoginUser({
+                    uid: user.uid,
+                    email: user.email,
+                    name: user.name || '',
+                }));
+            } else {
+                Alert.alert('Error', 'Email is not verified');
             }
         } catch (error) {
-                Alert.alert('Error',error.message);
+            Alert.alert('Error', error.message);
         }
     }
     return (
@@ -47,7 +51,7 @@ const Login = () => {
                 handleSignin={handleSignin}
                 setFormData={setLogin}
             />
-            <Footer/>
+            <Footer />
         </View>
     )
 }

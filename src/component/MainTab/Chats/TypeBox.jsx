@@ -4,10 +4,20 @@ import {
 } from 'react-native';
 import { colors } from '../../../constant';
 import VectorIcon from '../../../utils/VectorIcons';
+import {sendMessage} from '../../../database/firestoreCRUD'
+import firestore from '@react-native-firebase/firestore'; 
+import { useSelector } from 'react-redux';
 
-const TypeBox = () => {
-  const [message, setMessage] = useState("");
+const TypeBox = ({chatroomId}) => {
   const [sendEnable, setSendEnable] = useState(false);
+  const [message, setMessage] = useState("");
+  const myUid = useSelector(state=>state.auth.user.uid);
+
+  const handleSend = async () => {
+  await sendMessage(chatroomId,message,myUid);
+  setMessage('');
+  setSendEnable(false);
+};
   return (
     <View
       style={styles.wrapper}
@@ -72,7 +82,7 @@ const TypeBox = () => {
                 name="send"
                 size={25}
                 color={colors.primary}
-                onPress={()=>{setMessage('');setSendEnable(false)}}
+                onPress={handleSend}
               />
           }
         </TouchableOpacity>

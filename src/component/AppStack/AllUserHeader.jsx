@@ -48,11 +48,12 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: colors.primaryColor,
-    paddingTop: 15,
+    paddingTop: 45,
     paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+
   },
   selectContact: {
     fontSize: 17,

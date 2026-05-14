@@ -1,17 +1,35 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
 import { colors } from '../../../constant';
-import { MessageData } from '../../../data/MessageData'
+import firestore from '@react-native-firebase/firestore';
+import { useSelector } from 'react-redux';
 
-const ChatBody = () => {
-    const userId = "1";
+const ChatBody = ({ chatroomId }) => {
+    const myUid = useSelector(state => state.auth.user.uid);
+    const [messages, setMessages] = useState([]);
+    console.log("All messages are: ", messages);
+
+
     const scrollViewRef = useRef();
     const scrollToBottom = () => {
-        scrollViewRef.current.scrollToEnd({ animated: true })
+        scrollViewRef.current?.scrollToEnd({ animated: true })
     }
 
-    const UserMessageView = ({message,time}) => {
+    useEffect(() => {
+        const unsubscribe = firestore()
+            .collection('chats')
+            .doc(chatroomId)
+            .collection('messages')
+            .orderBy('timestamp')
+            .onSnapshot(snapshot => {
+                const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setMessages(msgs);
+            });
+        return () => unsubscribe(); // cleanup on unmount
+    }, [chatroomId]);
+
+    const UserMessageView = ({ message, time }) => {
         return (
             <View style={styles.userContainer}>
                 <View style={styles.userInnerContainer}>
@@ -29,7 +47,7 @@ const ChatBody = () => {
         );
     };
 
-    const OtherUserMessageView = ({message,time}) => {
+    const OtherUserMessageView = ({ message, time }) => {
         return (
             <View style={styles.otherUserContainer}>
                 <View style={styles.otherUserInnerContainer}>
@@ -38,6 +56,15 @@ const ChatBody = () => {
                 </View>
             </View>
         );
+    };
+
+    const formatTimestamp = (timestamp) => {
+        const date = new Date(timestamp);
+
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+
+        return `${hours}:${minutes}`;
     };
 
     return (
@@ -49,15 +76,15 @@ const ChatBody = () => {
             >
                 <View>
                     {
-                        MessageData.map((item) => (
-                            <>
-                            {
-                                item.id===userId?
-                                <UserMessageView message={item.message} time={item.time}/>
+                        messages.map((item) => (
+                            item.senderId === myUid ?
+                                <View key={item.id}>
+                                    <UserMessageView message={item.text} time={formatTimestamp(item.timestamp)} />
+                                </View>
                                 :
-                                <OtherUserMessageView message={item.message} time={item.time}/>
-                            }
-                            </>
+                                <View key={item.id}>
+                                    <OtherUserMessageView message={item.text} time={formatTimestamp(item.timestamp)} />
+                                </View>
                         ))
                     }
                 </View>

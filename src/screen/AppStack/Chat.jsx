@@ -7,8 +7,8 @@ import { useRoute } from '@react-navigation/native'
 
 const Chat = () => {
   const route = useRoute();
-  const userId = route.params.userId;
-  console.log("UserID",userId);
+  const { chatroomId, otherUserId } = route.params;
+  // console.log("ChatroomID: ",chatroomId,"otherUserId: ",otherUserId);
   
   return (
     <View style={{ flex: 1 }}>
@@ -16,11 +16,11 @@ const Chat = () => {
         backgroundColor={colors.headerBack}
         barStyle="light-content"
       />
-      <ChatHeader userId={userId}/>
+      <ChatHeader userId={otherUserId}/>
       <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
-        <ChatBody userId={userId}/>
+        <ChatBody chatroomId={chatroomId}/>
       </ImageBackground>
-      <TypeBox />
+      <TypeBox chatroomId={chatroomId}/>
     </View>
   )
 }

@@ -1,18 +1,31 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { useNavigation } from '@react-navigation/native'
+import { useSelector } from 'react-redux';
+import {getOrCreateChatroom} from '../../database/firestoreCRUD'
 
 const AllUserFlatlistData = ({ item }) => {
   const navigation = useNavigation();
-  const onNavigate =(userId)=>{
-    navigation.navigate("ChatScreen",{
-      userId:userId
-    })
-  }
+  
+    const myUid = useSelector(state=>state.auth.user.uid);
+  
+      const handlePress = async () => {
+      const chatroomId = await getOrCreateChatroom(myUid, item.uid);
+      navigation.navigate('AppStack', {
+        screen: 'ChatScreen',
+        params: { chatroomId, otherUserId: item.uid },
+      });
+    };
+
+  // const onNavigate =(userId)=>{
+  //   navigation.navigate("ChatScreen",{
+  //     userId:userId
+  //   })
+  // }
   return (
     <TouchableOpacity 
       style={styles.userContainer}
-      onPress={()=>onNavigate(item.uid)}
+      onPress={handlePress}
     >
 
       <Image

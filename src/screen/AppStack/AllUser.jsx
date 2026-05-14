@@ -4,9 +4,11 @@ import { getUsers } from '../../database/firestoreCRUD';
 import AllUserHeader from '../../component/AppStack/AllUserHeader'
 import AllUserFlatlistData from '../../component/AppStack/AllUserFlatlistData'
 import { colors, fontWeight } from '../../constant';
+import { useSelector } from 'react-redux';
 
 const AllUser = () => {
   const [users, setUsers] = useState([]);
+  const myUid = useSelector(state=>state.auth.user.uid);
 
   useEffect(() => {
     fetchUser();
@@ -15,7 +17,8 @@ const AllUser = () => {
   const fetchUser = async () => {
     const data = await getUsers();
     if (data) {
-      setUsers(data);
+      const showData = data.filter(item=>item.id !== myUid);
+      setUsers(showData);
     }
   }
   return (
