@@ -1,13 +1,13 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import {Header,Searchbar,FlatList, FloatingBtn} from '../../component/MainTab/Chats'
+import {Header,Searchbar,Chatlist, FloatingBtn} from '../../component/MainTab/Chats'
 
 const Chats = () => {
   return (
     <View style={{flex:1}}>
       <Header/>
       <Searchbar/>
-      <FlatList/>
+      <Chatlist/>
       <FloatingBtn/>
     </View>
   )

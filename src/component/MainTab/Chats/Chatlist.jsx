@@ -1,13 +1,13 @@
 import { View, Text, FlatList } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { FlatlistRender } from '../../../component/MainTab/Chats'
+import { FlatlistRender } from '.'
 import Lock from 'react-native-vector-icons/Fontisto'
 import { colors } from '../../../constant'
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux'
 import {formatTimestamp} from '../../../utils/GetTime'
 
-const Flatlist = () => {
+const Clatlist = () => {
 
   const [chatList, setChatList] = useState([]);
   const myUid = useSelector(state => state.auth.user.uid);
@@ -89,4 +89,4 @@ const Flatlist = () => {
   )
 }
 
-export default Flatlist
+export default Clatlist

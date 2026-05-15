@@ -16,12 +16,7 @@ const AllUserFlatlistData = ({ item }) => {
         params: { chatroomId, otherUserId: item.uid },
       });
     };
-
-  // const onNavigate =(userId)=>{
-  //   navigation.navigate("ChatScreen",{
-  //     userId:userId
-  //   })
-  // }
+    
   return (
     <TouchableOpacity 
       style={styles.userContainer}

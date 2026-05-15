@@ -1,6 +1,6 @@
 export {default as Header} from './Header'
 export {default as Searchbar} from './Searchbar'
-export {default as FlatList} from './Flatlist'
+export {default as Chatlist} from './Chatlist'
 export {default as FloatingBtn} from './FloatingBtn'
 export {default as FlatlistRender} from './FlatlistRender'
 export {default as ChatHeader} from './ChatHeader'
