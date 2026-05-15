@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
 import { colors } from '../../../constant';
@@ -7,8 +7,8 @@ import { useSelector } from 'react-redux';
 import {formatTimestamp} from '../../../utils/GetTime'
 
 const ChatBody = ({ chatroomId }) => {
-    const myUid = useSelector(state => state.auth.user.uid);
     const [messages, setMessages] = useState([]);
+    const myUid = useSelector(state => state.auth.user.uid);
     console.log("All messages are: ", messages);
 
 

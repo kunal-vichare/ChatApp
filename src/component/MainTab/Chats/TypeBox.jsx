@@ -8,10 +8,24 @@ import {sendMessage} from '../../../database/firestoreCRUD'
 import firestore from '@react-native-firebase/firestore'; 
 import { useSelector } from 'react-redux';
 
-const TypeBox = ({chatroomId}) => {
+const TypeBox = ({chatroomId,setPreviewUrl}) => {
   const [sendEnable, setSendEnable] = useState(false);
   const [message, setMessage] = useState("");
   const myUid = useSelector(state=>state.auth.user.uid);
+
+  const handleTextChange = (text) => {
+    setMessage(text);
+    setSendEnable(true);
+
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const match = text.match(urlRegex);
+
+    if (match && match[0]) {
+        setPreviewUrl(match[0]);
+    } else {
+        setPreviewUrl('');
+    }
+};
 
   const handleSend = async () => {
   await sendMessage(chatroomId,message,myUid);
@@ -36,7 +50,7 @@ const TypeBox = ({chatroomId}) => {
               placeholder="Type a message"
               value={message}
               style={styles.input}
-              onChangeText={(val) => { setMessage(val); setSendEnable(true)}}
+              onChangeText={handleTextChange}
             />
           </View>
           <View style={styles.secondView}>
