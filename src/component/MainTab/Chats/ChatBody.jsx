@@ -4,6 +4,7 @@ import VectorIcon from '../../../utils/VectorIcons';
 import { colors } from '../../../constant';
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
+import {formatTimestamp} from '../../../utils/GetTime'
 
 const ChatBody = ({ chatroomId }) => {
     const myUid = useSelector(state => state.auth.user.uid);
@@ -56,15 +57,6 @@ const ChatBody = ({ chatroomId }) => {
                 </View>
             </View>
         );
-    };
-
-    const formatTimestamp = (timestamp) => {
-        const date = new Date(timestamp);
-
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-
-        return `${hours}:${minutes}`;
     };
 
     return (

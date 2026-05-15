@@ -15,17 +15,17 @@ const FlatlistRender = ({item}) => {
         })}
     >
         <View style={styles.leftContainer}>
-            <Image source={require("../../../assets/image/Pic.jpg")} style={styles.image}/>
+            <Image source={{uri : item.profileImage}} style={styles.image}/>
             <View style={styles.msgContainer}>
-                <Text style={styles.name}>Kunal Vichare</Text>
-                <Text style={styles.message}>Hii How are you!</Text>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.message}>{item.lastMessage}</Text>
             </View>
         </View>
         <View style={styles.rightContainer}>
-            <Text style={styles.time}>5:27 am</Text>
-            <View style={styles.messageCountContainer}>
+            <Text style={styles.time}>{item.updatedAt}</Text>
+            {/* <View style={styles.messageCountContainer}>
                 <Text style={styles.messageCount}>4</Text>
-            </View>
+            </View> */}
         </View>
     </TouchableOpacity>
   )
