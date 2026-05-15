@@ -37,10 +37,10 @@ const ChatBody = ({ chatroomId }) => {
                     <Text style={styles.message}>{message}</Text>
                     <Text style={styles.time}>{time}</Text>
                     <VectorIcon
-                        name="check-double"
-                        type="FontAwesome5"
+                        name="checkmark-done-sharp"
+                        type="Ionicons"
                         color={colors.blue}
-                        size={12}
+                        size={15}
                         style={styles.doubleCheck}
                     />
                 </View>
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
         marginVertical: 5,
     },
     userInnerContainer: {
-        backgroundColor: colors.teal,
+        backgroundColor: colors.userMsg,
         paddingVertical: 8,
         paddingHorizontal: 15,
         borderTopLeftRadius: 30,

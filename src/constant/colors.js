@@ -20,4 +20,5 @@ export const colors = {
     textColor: '#cdd4da',
     textGrey: '#8b959a',
     red: '#e53f43',
+    userMsg: '#DCF8C6'
 }
