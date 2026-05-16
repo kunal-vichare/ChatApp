@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { getUsers } from '../../database/firestoreCRUD';
 import AllUserHeader from '../../component/AppStack/AllUserHeader'
 import AllUserFlatlistData from '../../component/AppStack/AllUserFlatlistData'
-import { colors, fontWeight } from '../../constant';
+import { colors, fontFamily, fontWeight } from '../../constant';
 import { useSelector } from 'react-redux';
 
 const AllUser = () => {
@@ -17,6 +17,8 @@ const AllUser = () => {
   const fetchUser = async () => {
     const data = await getUsers();
     if (data) {
+      console.log("myUID: ",myUid);
+      
       const showData = data.filter(item=>item.id !== myUid);
       setUsers(showData);
     }
@@ -32,6 +34,12 @@ const AllUser = () => {
           renderItem={({ item }) => (
             <AllUserFlatlistData item={item} />
           )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}> No users yet </Text>
+              <Text style={styles.emptyText}> Refer your frinds to use chatmate </Text>
+            </View>
+          }
         />
       </View>
     </View>
@@ -47,6 +55,17 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 16
+  },
+  emptyContainer:{
+    alignSelf:'center',
+    marginTop:'50%',
+    gap:3
+  },
+  emptyText:{
+    textAlign:'center',
+    fontFamily:fontFamily.popinsBold,
+    fontWeight:fontWeight.bold,
+    color:colors.textGrey
   }
 })
 

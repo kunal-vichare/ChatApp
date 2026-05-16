@@ -1,21 +1,20 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
 import { colors } from '../../../constant';
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
-import {formatTimestamp} from '../../../utils/GetTime'
+import { formatTimestamp } from '../../../utils/GetTime';
 
 const ChatBody = ({ chatroomId }) => {
     const [messages, setMessages] = useState([]);
     const myUid = useSelector(state => state.auth.user.uid);
-    console.log("All messages are: ", messages);
 
+    const flatListRef = useRef(null);
 
-    const scrollViewRef = useRef();
     const scrollToBottom = () => {
-        scrollViewRef.current?.scrollToEnd({ animated: true })
-    }
+        flatListRef.current?.scrollToEnd({ animated: true });
+    };
 
     useEffect(() => {
         const unsubscribe = firestore()
@@ -24,73 +23,99 @@ const ChatBody = ({ chatroomId }) => {
             .collection('messages')
             .orderBy('timestamp')
             .onSnapshot(snapshot => {
-                const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const msgs = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+
                 setMessages(msgs);
             });
-        return () => unsubscribe(); // cleanup on unmount
+
+        return () => unsubscribe();
     }, [chatroomId]);
 
-    const UserMessageView = ({ message, time }) => {
-        return (
-            <View style={styles.userContainer}>
-                <View style={styles.userInnerContainer}>
-                    <Text style={styles.message}>{message}</Text>
-                    <Text style={styles.time}>{time}</Text>
-                    <VectorIcon
-                        name="checkmark-done-sharp"
-                        type="Ionicons"
-                        color={colors.blue}
-                        size={15}
-                        style={styles.doubleCheck}
-                    />
-                </View>
-            </View>
-        );
-    };
+    const UserMessageView = ({ message, time }) => (
+        <View style={styles.userContainer}>
+            <View style={styles.userInnerContainer}>
+                <Text style={styles.message}>{message}</Text>
+                <Text style={styles.time}>{time}</Text>
 
-    const OtherUserMessageView = ({ message, time }) => {
-        return (
-            <View style={styles.otherUserContainer}>
-                <View style={styles.otherUserInnerContainer}>
-                    <Text style={styles.message}>{message}</Text>
-                    <Text style={styles.time}>{time}</Text>
-                </View>
+                <VectorIcon
+                    name="checkmark-done-sharp"
+                    type="Ionicons"
+                    color={colors.blue}
+                    size={15}
+                    style={styles.doubleCheck}
+                />
             </View>
+        </View>
+    );
+
+    const OtherUserMessageView = ({ message, time }) => (
+        <View style={styles.otherUserContainer}>
+            <View style={styles.otherUserInnerContainer}>
+                <Text style={styles.message}>{message}</Text>
+                <Text style={styles.time}>{time}</Text>
+            </View>
+        </View>
+    );
+
+    const renderItem = ({ item }) => {
+        const time = formatTimestamp(item.timestamp);
+
+        return item.senderId === myUid ? (
+            <UserMessageView
+                message={item.text}
+                time={time}
+            />
+        ) : (
+            <OtherUserMessageView
+                message={item.text}
+                time={time}
+            />
         );
     };
 
     return (
-        <>
-            <ScrollView
-                ref={scrollViewRef}
-                onContentSizeChange={scrollToBottom}
+        <View style={{ flex: 1 }}>
+            <FlatList
+                ref={flatListRef}
+                data={messages}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                    paddingVertical: 10,
+                }}
+                onContentSizeChange={scrollToBottom}
+                onLayout={scrollToBottom}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>
+                        <VectorIcon
+                            type="Fontisto"
+                            name='locked'
+                            size={13}
+                            color={colors.textGrey}
+                        /> 
+                            {"\u00A0"} Message and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. <Text style={{color:'blue',textDecorationLine:'underline'}}>Team ChatMate</Text>
+                        </Text>
+                    </View>
+                }
+            />
+
+            <TouchableOpacity
+                style={styles.scrollDownArrow}
+                onPress={scrollToBottom}
             >
-                <View>
-                    {
-                        messages.map((item) => (
-                            item.senderId === myUid ?
-                                <View key={item.id}>
-                                    <UserMessageView message={item.text} time={formatTimestamp(item.timestamp)} />
-                                </View>
-                                :
-                                <View key={item.id}>
-                                    <OtherUserMessageView message={item.text} time={formatTimestamp(item.timestamp)} />
-                                </View>
-                        ))
-                    }
-                </View>
-            </ScrollView>
-            <TouchableOpacity style={styles.scrollDownArrow}>
                 <VectorIcon
                     name="angle-double-down"
                     type="FontAwesome5"
                     size={25}
                     color={colors.secondary}
-                    onPress={scrollToBottom}
                 />
             </TouchableOpacity>
-        </>
+        </View>
     );
 };
 
@@ -99,12 +124,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-end',
         marginVertical: 5,
+        paddingHorizontal: 10,
     },
+
     otherUserContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
         marginVertical: 5,
+        paddingHorizontal: 10,
     },
+
     userInnerContainer: {
         backgroundColor: colors.userMsg,
         paddingVertical: 8,
@@ -114,19 +142,9 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 30,
         flexDirection: 'row',
         alignItems: 'flex-end',
+        maxWidth: '80%',
     },
-    message: {
-        fontSize: 13,
-        color: colors.white,
-    },
-    time: {
-        fontSize: 9,
-        color: colors.white,
-        marginLeft: 5,
-    },
-    doubleCheck: {
-        marginLeft: 5,
-    },
+
     otherUserInnerContainer: {
         backgroundColor: colors.primary,
         paddingVertical: 8,
@@ -136,7 +154,24 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 30,
         flexDirection: 'row',
         alignItems: 'flex-end',
+        maxWidth: '80%',
     },
+
+    message: {
+        fontSize: 13,
+        color: colors.white,
+    },
+
+    time: {
+        fontSize: 9,
+        color: colors.white,
+        marginLeft: 5,
+    },
+
+    doubleCheck: {
+        marginLeft: 5,
+    },
+
     scrollDownArrow: {
         position: 'absolute',
         backgroundColor: colors.primary,
@@ -145,14 +180,21 @@ const styles = StyleSheet.create({
         width: 30,
         alignItems: 'center',
         justifyContent: 'center',
-        bottom: 80,
-        opacity: 0.8,
-        right: 20
+        bottom: 20,
+        right: 20,
+        opacity: 0.5
     },
-    scrollIcon: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
+    emptyContainer:{
+        flexDirection:'row',
+        alignItems:'center',
+        backgroundColor:'#c4c5bc',
+        marginHorizontal:40,
+        borderRadius:15,
+        padding:10
     },
+    emptyText:{
+        textAlign:'center'
+    }
 });
 
 export default ChatBody;

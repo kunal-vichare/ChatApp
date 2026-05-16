@@ -6,6 +6,7 @@ export const registerUser = async(email,password) => {
         await userCredentials.user.sendEmailVerification();
         return userCredentials.user;
     } catch (error) {
+        console.log(error);
         let errorMessage;
         switch (error.code) {
             case 'auth/email-already-in-use':

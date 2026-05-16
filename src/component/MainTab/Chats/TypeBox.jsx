@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import {
-  View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform,
+  View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
 import { colors } from '../../../constant';
 import VectorIcon from '../../../utils/VectorIcons';
-import {sendMessage} from '../../../database/firestoreCRUD'
-import firestore from '@react-native-firebase/firestore'; 
+import { sendMessage } from '../../../database/firestoreCRUD'
+import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 
-const TypeBox = ({chatroomId,setPreviewUrl}) => {
+const TypeBox = ({ chatroomId, setPreviewUrl }) => {
   const [sendEnable, setSendEnable] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [message, setMessage] = useState("");
-  const myUid = useSelector(state=>state.auth.user.uid);
+  const myUid = useSelector(state => state.auth.user.uid);
 
   const handleTextChange = (text) => {
     setMessage(text);
@@ -21,17 +22,29 @@ const TypeBox = ({chatroomId,setPreviewUrl}) => {
     const match = text.match(urlRegex);
 
     if (match && match[0]) {
-        setPreviewUrl(match[0]);
+      setPreviewUrl(match[0]);
     } else {
-        setPreviewUrl('');
+      setPreviewUrl('');
     }
-};
+  };
 
   const handleSend = async () => {
-  await sendMessage(chatroomId,message,myUid);
-  setMessage('');
-  setSendEnable(false);
-};
+    // !message.trim()) => removes spaces from start and end so handle sending empty spaces as message
+    if (isSending || !message.trim()) return; //prevent duplicate tap
+
+    try {
+      setIsSending(true);
+      await sendMessage(chatroomId, message, myUid);
+      setMessage('');
+      setSendEnable(false);
+      setPreviewUrl('')
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsSending(false);
+    }
+
+  };
   return (
     <View
       style={styles.wrapper}
@@ -83,14 +96,19 @@ const TypeBox = ({chatroomId,setPreviewUrl}) => {
 
         <TouchableOpacity style={styles.sendButton}>
           {
-            !sendEnable ?
+            !sendEnable ? (
               <VectorIcon
                 type="MaterialCommunityIcons"
                 name="microphone"
                 size={25}
                 color={colors.primary}
               />
-              :
+            ) : isSending ? (
+              <ActivityIndicator
+                size="small"
+                color={colors.primary}
+              />
+            ) : (
               <VectorIcon
                 type="MaterialCommunityIcons"
                 name="send"
@@ -98,6 +116,7 @@ const TypeBox = ({chatroomId,setPreviewUrl}) => {
                 color={colors.primary}
                 onPress={handleSend}
               />
+            )
           }
         </TouchableOpacity>
       </View>
@@ -107,17 +126,14 @@ const TypeBox = ({chatroomId,setPreviewUrl}) => {
 
 const styles = StyleSheet.create({
   wrapper: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+
   },
 
   footer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 10,
-    paddingBottom:7
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
 
   inputContainer: {
@@ -125,16 +141,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'white',
     alignItems: 'center',
-    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 30,
     paddingHorizontal: 15,
     marginRight: 10,
+    minHeight: 50,
     maxHeight: 120,
     justifyContent: 'space-between'
   },
 
   input: {
     fontSize: 16,
-    paddingVertical: 15,
+    paddingVertical: 12,
   },
 
   sendButton: {
@@ -144,6 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 3
   },
   firstView: {
     flexDirection: 'row',

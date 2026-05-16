@@ -1,11 +1,12 @@
-import { View, Text, FlatList } from 'react-native'
+import { View, Text, FlatList, StyleSheet } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { FlatlistRender } from '.'
 import Lock from 'react-native-vector-icons/Fontisto'
-import { colors } from '../../../constant'
+import { colors, fontFamily, fontWeight } from '../../../constant'
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux'
 import {formatTimestamp} from '../../../utils/GetTime'
+import VectorIcon from '../../../utils/VectorIcons'
 
 const Clatlist = () => {
 
@@ -74,13 +75,24 @@ const Clatlist = () => {
         )}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingBottom: 200 }}
-        ListFooterComponent={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Lock name="locked" size={13} color={colors.textGrey}/>
-            <Text style={{ color: colors.textGrey }}>
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Chat Room is empty</Text>
+            <Text style={styles.emptyText}>Go to all users to create Chat Room</Text>
+          </View>
+        }
+        ListFooterComponent={ chatList.length > 0 ?
+          <View style={styles.footerContainer}>
+            <VectorIcon 
+              type="Fontisto"
+              name='locked'
+              size={13}
+              color={colors.textGrey}
+            />
+            <Text style={styles.footerText}>
               Your personal message are end-to-end-encrypted
             </Text>
-          </View>
+          </View> : null
         }
         ListFooterComponentStyle={{ alignItems: 'center' }}
       />
@@ -88,5 +100,28 @@ const Clatlist = () => {
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  emptyContainer:{
+    // flexDirection: 'row',
+    alignSelf: 'center',
+    gap: 3,
+    marginTop:'50%'
+  },
+  emptyText:{
+    color: colors.textGrey,
+    fontFamily:fontFamily.popinsBold,
+    fontWeight:fontWeight.bold,
+    textAlign:'center'
+  },
+  footerContainer:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5
+  },
+  footerText:{
+    color: colors.textGrey
+  }
+})
 
 export default Clatlist

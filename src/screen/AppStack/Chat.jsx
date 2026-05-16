@@ -26,22 +26,29 @@ const Chat = () => {
           previewUrl ? (
             <LinkPreview
               url={previewUrl}
-              // loaderComponent={<ActivityIndicator />}
               timeout={3000}
               onError={(error) => console.log(error)}
               containerStyle={{
-                maxWidth:'95%',
+                flexDirection: 'row',
+                alignItems: 'center',
+                maxWidth: '95%',
                 borderRadius: 10,
                 backgroundColor: colors.primary,
                 marginHorizontal: 10,
-                marginBottom:70,
+                marginBottom: 70,
+                overflow: 'hidden',
+                padding: 10,
               }}
               imageStyle={{
-                borderTopLeftRadius: 10,
-                borderTopRightRadius: 10,
-                height: 180,
-                width:'100%',
-                resizeMode:'cover'
+                height: 80,
+                width: 150,
+                borderRadius: 10,
+                resizeMode: 'cover',
+              }}
+              textContainerStyle={{
+                flex: 1,
+                marginLeft: 10,
+                justifyContent: 'center',
               }}
               titleStyle={{
                 fontSize: 16,
@@ -57,12 +64,12 @@ const Chat = () => {
                 color: 'grey',
               }}
               titleLines={1}
-              descriptionLines={1}
+              descriptionLines={2}
             />
           ) : null
         }
-      </ImageBackground>
       <TypeBox chatroomId={chatroomId} setPreviewUrl={setPreviewUrl} />
+      </ImageBackground>
     </View>
   )
 }
