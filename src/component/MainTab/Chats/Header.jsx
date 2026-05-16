@@ -1,10 +1,12 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { colors, fontSize, fontWeight, gap, padding } from '../../../constant'
 import VectorIcons from '../../../utils/VectorIcons'
 import { useNavigation } from '@react-navigation/native'
+import { Divider, Menu } from 'react-native-paper'
 
 const Header = () => {
+    const [visible, setVisible] = useState(false);
     const navigation = useNavigation();
     return (
         <View style={styles.container}>
@@ -18,16 +20,34 @@ const Header = () => {
                         screen: 'AllUserScreen'
                     })}
                 />
-                <VectorIcons 
-                    type="Feather" 
-                    name="camera" 
-                    size={fontSize.xl} 
+                <VectorIcons
+                    type="Feather"
+                    name="camera"
+                    size={fontSize.xl}
                 />
-                <VectorIcons 
-                    type="Entypo" 
-                    name="dots-three-vertical" 
-                    size={fontSize.xl} 
-                />
+                <Menu
+                    visible={visible}
+                    onDismiss={() => setVisible(false)}
+                    anchor={
+                        <VectorIcons
+                            type="Entypo"
+                            name="dots-three-vertical"
+                            size={fontSize.xl}
+                            onPress={() => setVisible(true)}
+                        />
+                    }
+                >
+                    <Menu.Item
+                        onPress={() => console.log("Button pressed")
+                        }
+                        title="Profile"
+                    />
+                    <Divider />
+                    <Menu.Item
+                        onPress={() => console.log("Button pressed")
+                        }
+                        title="Logout" />
+                </Menu>
             </View>
         </View>
     )
