@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Alert,KeyboardAvoidingView,Platform,ScrollView,TouchableWithoutFeedback,Keyboard } from 'react-native'
 import React, { useState } from 'react'
 import { colors, fontFamily, fontSize, fontWeight, padding } from '../../constant';
 import TextContainer from '../../component/Authentication/TextContainer'
@@ -42,21 +42,43 @@ const Signup = () => {
         }
     };
 
-  return (
-        <View style={styles.container}>
-            <Text style={styles.loginText}>Create Account</Text>
-            <Text style={styles.welcomeText}>Join the conversation, anytime, anywhere.</Text>
+return (
+    <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+        <TouchableWithoutFeedback
+            onPress={Keyboard.dismiss}
+        >
+            <ScrollView
+                contentContainerStyle={{
+                    flexGrow: 1
+                }}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.container}>
+                    <Text style={styles.loginText}>
+                        Create Account
+                    </Text>
 
-            {/* Both use same component but maintain different state. */}
-            <TextContainer
-                type="signup"
-                handleRegister={handleRegister}
-                formData={signup}
-                setFormData={setSignup}
-            />
-            <Footer/>
-        </View>
-  )
+                    <Text style={styles.welcomeText}>
+                        Join the conversation, anytime, anywhere.
+                    </Text>
+
+                    <TextContainer
+                        type="signup"
+                        handleRegister={handleRegister}
+                        formData={signup}
+                        setFormData={setSignup}
+                    />
+
+                    <Footer />
+                </View>
+            </ScrollView>
+        </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+)
 }
 
 const styles = StyleSheet.create({

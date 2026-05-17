@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native'
+import { View, Text, FlatList, StyleSheet,ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { FlatlistRender } from '.'
 import Lock from 'react-native-vector-icons/Fontisto'
@@ -7,10 +7,12 @@ import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux'
 import {formatTimestamp} from '../../../utils/GetTime'
 import VectorIcon from '../../../utils/VectorIcons'
+import {Loader} from '../../../component/MainTab/Chats'
 
 const Clatlist = () => {
 
   const [chatList, setChatList] = useState([]);
+  const [loading, setLoading] = useState(false);
   const myUid = useSelector(state => state.auth.user.uid);
 
   console.log("chatList: ", chatList);
@@ -23,7 +25,8 @@ const Clatlist = () => {
       .onSnapshot(async snapshot => {
 
         try {
-
+          
+          setLoading(true);
           const chatData = await Promise.all(
             snapshot.docs.map(async chatDoc => {
 
@@ -57,6 +60,8 @@ const Clatlist = () => {
 
         } catch (error) {
           console.log(error);
+        } finally {
+          setLoading(false);
         }
 
       });
@@ -68,34 +73,40 @@ const Clatlist = () => {
   return (
     <View>
 
-      <FlatList
-        data={chatList}
-        renderItem={({ item }) => (
-          <FlatlistRender item={item} />
-        )}
-        keyExtractor={item => item.id}
-        contentContainerStyle={{ paddingBottom: 200 }}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Chat Room is empty</Text>
-            <Text style={styles.emptyText}>Go to all users to create Chat Room</Text>
-          </View>
-        }
-        ListFooterComponent={ chatList.length > 0 ?
-          <View style={styles.footerContainer}>
-            <VectorIcon 
-              type="Fontisto"
-              name='locked'
-              size={13}
-              color={colors.textGrey}
-            />
-            <Text style={styles.footerText}>
-              Your personal message are end-to-end-encrypted
-            </Text>
-          </View> : null
-        }
-        ListFooterComponentStyle={{ alignItems: 'center' }}
-      />
+      {
+        loading ? 
+        <Loader/>
+        :
+        <FlatList
+          data={chatList}
+          renderItem={({ item }) => (
+            <FlatlistRender item={item} />
+          )}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{ paddingBottom: 200 }}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Chat Room is empty</Text>
+              <Text style={styles.emptyText}>Go to all users to create Chat Room</Text>
+            </View>
+          }
+          ListFooterComponent={ chatList.length > 0 ?
+            <View style={styles.footerContainer}>
+              <VectorIcon 
+                type="Fontisto"
+                name='locked'
+                size={13}
+                color={colors.textGrey}
+              />
+              <Text style={styles.footerText}>
+                Your personal message are end-to-end-encrypted
+              </Text>
+            </View> : null
+          }
+          ListFooterComponentStyle={{ alignItems: 'center' }}
+        />     
+      }
+
 
     </View>
   )

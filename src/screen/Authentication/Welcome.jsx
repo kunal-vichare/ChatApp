@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   },
   imgContainer:{
     marginHorizontal:margin.xxxl,
-    marginTop:margin.lg
+    marginTop:10
   },
   img:{
     resizeMode:'contain',
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     justifyContent:'space-evenly',
     // gap:gap.xs,
     paddingHorizontal:padding.headingXs,
-    paddingTop:padding.bigX
+    paddingVertical:44
   },
   btn:{
     paddingVertical:padding.base,

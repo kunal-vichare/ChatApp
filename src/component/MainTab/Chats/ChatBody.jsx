@@ -5,8 +5,10 @@ import { colors } from '../../../constant';
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 import { formatTimestamp } from '../../../utils/GetTime';
+import {Loader} from '../../../component/MainTab/Chats'
 
 const ChatBody = ({ chatroomId }) => {
+    const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const myUid = useSelector(state => state.auth.user.uid);
 
@@ -17,6 +19,7 @@ const ChatBody = ({ chatroomId }) => {
     };
 
     useEffect(() => {
+        setLoading(true);
         const unsubscribe = firestore()
             .collection('chats')
             .doc(chatroomId)
@@ -29,7 +32,12 @@ const ChatBody = ({ chatroomId }) => {
                 }));
 
                 setMessages(msgs);
-            });
+                setLoading(false);
+            },
+                error => {
+                    console.log(error);
+                    setLoading(false);
+                });
 
         return () => unsubscribe();
     }, [chatroomId]);
@@ -78,31 +86,36 @@ const ChatBody = ({ chatroomId }) => {
 
     return (
         <View style={{ flex: 1 }}>
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{
-                    paddingVertical: 10,
-                }}
-                onContentSizeChange={scrollToBottom}
-                onLayout={scrollToBottom}
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>
-                        <VectorIcon
-                            type="Fontisto"
-                            name='locked'
-                            size={13}
-                            color={colors.textGrey}
-                        /> 
-                            {"\u00A0"} Message and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. <Text style={{color:'blue',textDecorationLine:'underline'}}>Team ChatMate</Text>
-                        </Text>
-                    </View>
-                }
-            />
+            {
+                loading?
+                <Loader/>
+                :
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{
+                        paddingVertical: 10,
+                    }}
+                    onContentSizeChange={scrollToBottom}
+                    onLayout={scrollToBottom}
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Text style={styles.emptyText}>
+                                <VectorIcon
+                                    type="Fontisto"
+                                    name='locked'
+                                    size={13}
+                                    color={colors.textGrey}
+                                />
+                                {"\u00A0"} Message and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. <Text style={{ color: 'blue', textDecorationLine: 'underline' }}>Team ChatMate</Text>
+                            </Text>
+                        </View>
+                    }
+                />
+            }
 
             <TouchableOpacity
                 style={styles.scrollDownArrow}
@@ -184,16 +197,16 @@ const styles = StyleSheet.create({
         right: 20,
         opacity: 0.5
     },
-    emptyContainer:{
-        flexDirection:'row',
-        alignItems:'center',
-        backgroundColor:'#c4c5bc',
-        marginHorizontal:40,
-        borderRadius:15,
-        padding:10
+    emptyContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#c4c5bc',
+        marginHorizontal: 40,
+        borderRadius: 15,
+        padding: 10
     },
-    emptyText:{
-        textAlign:'center'
+    emptyText: {
+        textAlign: 'center'
     }
 });
 

@@ -8,40 +8,40 @@ import VectorIcon from '../../utils/VectorIcons';
 
 const Footer = () => {
     const navigation = useNavigation();
-  return (
-<View style={styles.footerContainer}>
-                <Text style={styles.continueText}>or continue with</Text>
-                <View style={styles.footerIconContainer}>
-                    <TouchableOpacity
-                        style={styles.footerBtn}
-                    >
-                        <VectorIcon
+    return (
+        <View style={styles.footerContainer}>
+            <Text style={styles.continueText}>or continue with</Text>
+            <View style={styles.footerIconContainer}>
+                <TouchableOpacity
+                    style={styles.footerBtn}
+                >
+                    <VectorIcon
                         type="AntDesign"
                         name="google"
                         size={30}
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.footerBtn}
-                    >
-                        <VectorIcon
+                    />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.footerBtn}
+                >
+                    <VectorIcon
                         type="Entypo"
                         name="facebook"
                         size={30}
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.footerBtn}
-                    >
-                        <VectorIcon
+                    />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.footerBtn}
+                >
+                    <VectorIcon
                         type="FontAwesome"
                         name="apple"
                         size={30}
-                        />
-                    </TouchableOpacity>
-                </View>
+                    />
+                </TouchableOpacity>
             </View>
-  )
+        </View>
+    )
 }
 
 const styles = StyleSheet.create({
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
         color: colors.createAcc
     },
     footerContainer: {
-        paddingTop: padding.xxxl,
+        paddingVertical: padding.xxxl,
         alignItems: 'center'
         // paddingHorizontal:114
     },
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.footerBtnBack,
         paddingVertical: padding.xs,
         paddingHorizontal: padding.regular,
-        borderRadius:radius.xs
+        borderRadius: radius.xs
     }
 })
 

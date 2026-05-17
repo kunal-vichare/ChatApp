@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
-import React, { use, useState } from 'react'
+import { View, Text, StyleSheet, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, ScrollView, Platform } from 'react-native'
+import React, {useState} from 'react'
 import { colors, fontFamily, fontSize, fontWeight, padding } from '../../constant';
 import TextContainer from '../../component/Authentication/TextContainer'
 import Footer from '../../component/Authentication/Footer'
@@ -42,18 +42,42 @@ const Login = () => {
         }
     }
     return (
-        <View style={styles.container}>
-            <Text style={styles.loginText}>Login here</Text>
-            <Text style={styles.welcomeText}>Welcome back you've been missed!</Text>
-            <TextContainer
-                type="signin"
-                formData={login}
-                handleSignin={handleSignin}
-                setFormData={setLogin}
-            />
-            <Footer />
-        </View>
-    )
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <TouchableWithoutFeedback
+                onPress={Keyboard.dismiss}
+            >
+                <ScrollView
+                    contentContainerStyle={{
+                        flexGrow: 1
+                    }}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.container}>
+                        <Text style={styles.loginText}>
+                            Login here
+                        </Text>
+
+                        <Text style={styles.welcomeText}>
+                            Welcome back you've been missed!
+                        </Text>
+
+                        <TextContainer
+                            type="signin"
+                            formData={login}
+                            handleSignin={handleSignin}
+                            setFormData={setLogin}
+                        />
+
+                        <Footer />
+                    </View>
+                </ScrollView>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+    );
 }
 
 const styles = StyleSheet.create({
