@@ -1,13 +1,23 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native'
 import React, { useState } from 'react'
 import { colors, fontSize, fontWeight, gap, padding } from '../../../constant'
 import VectorIcons from '../../../utils/VectorIcons'
 import { useNavigation } from '@react-navigation/native'
 import { Divider, Menu } from 'react-native-paper'
+import auth from '@react-native-firebase/auth'
+import { useDispatch, useSelector } from 'react-redux'
+import {toggleTheme} from '../../../redux/slice/darkMode'
 
 const Header = () => {
+    // const [darkMode, setDarkMode] = useState(false);
     const [visible, setVisible] = useState(false);
+    const dispatch = useDispatch();
     const navigation = useNavigation();
+    const handleLogout = async () => {
+        await auth().signOut();
+    }
+    const darkMode = useSelector((state)=>state.theme.dark);
+    
     return (
         <View style={styles.container}>
             <Text style={styles.mainText}>Chat Mate</Text>
@@ -38,15 +48,33 @@ const Header = () => {
                     }
                 >
                     <Menu.Item
-                        onPress={() => console.log("Button pressed")
+                        onPress={() =>
+                            console.log("Button pressed")
                         }
+                        leadingIcon="account-outline"
                         title="Profile"
                     />
                     <Divider />
+                    <View style={styles.switchContainer}>
+                        <View style={styles.darkModeRow}>
+                            <VectorIcons
+                                type="MaterialCommunityIcons"
+                                name="theme-light-dark"
+                                size={22}
+                            />
+                            <Text style={styles.switchText}>Dark Mode</Text>
+                        </View>
+                        <Switch
+                            value={darkMode}
+                            onValueChange={() => dispatch(toggleTheme())}
+                        />
+                    </View>
+                    <Divider />
                     <Menu.Item
-                        onPress={() => console.log("Button pressed")
-                        }
-                        title="Logout" />
+                        onPress={handleLogout}
+                        leadingIcon="logout"
+                        title="Logout"
+                    />
                 </Menu>
             </View>
         </View>
@@ -71,7 +99,23 @@ const styles = StyleSheet.create({
     btnContainer: {
         flexDirection: 'row',
         gap: gap.lg
-    }
+    },
+    switchContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+    },
+    switchText: {
+        fontSize: 16,
+        color: colors.bp,
+    },
+    darkModeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
 })
 
 export default Header
