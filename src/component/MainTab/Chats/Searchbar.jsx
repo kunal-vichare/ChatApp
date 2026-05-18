@@ -3,13 +3,14 @@ import React from 'react'
 import Search from 'react-native-vector-icons/Fontisto'
 import { colors, margin, padding, radius } from '../../../constant'
 
-const Searchbar = () => {
+const Searchbar = ({setSearch}) => {
   return (
     <View style={styles.searchContainer}>
         <Search name="search" size={20} style={styles.icon}/>
       <TextInput
         placeholder='Ask Meta AI or Search'
         style={styles.textIp}
+        onChangeText={(val)=>setSearch(val)}
       />
     </View>
   )

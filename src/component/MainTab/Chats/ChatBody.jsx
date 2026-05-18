@@ -13,6 +13,18 @@ const ChatBody = ({ chatroomId }) => {
     const myUid = useSelector(state => state.auth.user.uid);
     const myName = useSelector(state => state.auth.user.name);
 
+    //Message grouping
+    const getGroupFlags = (index) => {
+        const item = messages[index];
+        const prevMsg = messages[index - 1];
+        const nextMsg = messages[index + 1];
+
+        const isFirst = !prevMsg || prevMsg.senderId !== item.senderId;
+        const isLast = !nextMsg || nextMsg.senderId !== item.senderId;
+        const isMiddle = !isFirst && !isLast;
+        return { isFirst, isLast, isMiddle };
+    }
+
     const flatListRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -43,30 +55,32 @@ const ChatBody = ({ chatroomId }) => {
         return () => unsubscribe();
     }, [chatroomId]);
 
-    const UserMessageView = ({ message, time }) => (
+    const UserMessageView = ({ message, time, isFirst, isLast, isMiddle }) => (
         <View style={styles.userContainer}>
             <View style={styles.userInnerContainer}>
-                <Text style={styles.sender}>You</Text>
-                <View style={{ flexDirection: 'row',alignItems:'center' }}>
+                {isFirst && (
+                    <Text style={styles.sender}>You</Text>
+                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={styles.message}>{message}</Text>
                     <Text style={styles.time}>{time}</Text>
-                <VectorIcon
-                    name="checkmark-done-sharp"
-                    type="Ionicons"
-                    color={colors.blue}
-                    size={15}
-                    style={styles.doubleCheck}
-                />
+                    <VectorIcon
+                        name="checkmark-done-sharp"
+                        type="Ionicons"
+                        color={colors.blue}
+                        size={15}
+                        style={styles.doubleCheck}
+                    />
                 </View>
             </View>
         </View>
     );
 
-    const OtherUserMessageView = ({ message, time, senderName }) => (
+    const OtherUserMessageView = ({ message, time, senderName, isFirst, isLast, isMiddle }) => (
         <View style={styles.otherUserContainer}>
             <View style={styles.otherUserInnerContainer}>
                 <Text style={styles.receiver}>{senderName}</Text>
-                <View style={{ flexDirection: 'row',alignItems:'center'}}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
                     <Text style={styles.message}>{message}</Text>
                     <Text style={styles.time}>{time}</Text>
                 </View>
@@ -74,19 +88,26 @@ const ChatBody = ({ chatroomId }) => {
         </View>
     );
 
-    const renderItem = ({ item }) => {
+    const renderItem = ({ item, index }) => {
         const time = formatTimestamp(item.timestamp);
+        const { isFirst, isLast, isMiddle } = getGroupFlags(index);
 
         return item.senderId === myUid ? (
             <UserMessageView
                 message={item.text}
                 time={time}
+                isFirst={isFirst}
+                isLast={isLast}
+                isMiddle={isMiddle}
             />
         ) : (
             <OtherUserMessageView
                 message={item.text}
                 time={time}
                 senderName={item.senderName}
+                isFirst={isFirst}
+                isLast={isLast}
+                isMiddle={isMiddle}
             />
         );
     };
@@ -163,7 +184,7 @@ const styles = StyleSheet.create({
         // flexDirection: 'row',
         // alignItems: 'flex-end',
         maxWidth: '80%',
-        gap:3
+        gap: 3
     },
 
     otherUserInnerContainer: {
@@ -176,7 +197,7 @@ const styles = StyleSheet.create({
         // flexDirection: 'row',
         // alignItems: 'flex-end',
         maxWidth: '80%',
-        gap:3
+        gap: 3
     },
 
     message: {
@@ -217,13 +238,13 @@ const styles = StyleSheet.create({
     emptyText: {
         textAlign: 'center'
     },
-    sender:{
-        color:'blue',
-        fontWeight:fontWeight.highlight,
+    sender: {
+        color: 'blue',
+        fontWeight: fontWeight.highlight,
     },
-    receiver : {
-        color:'red',
-        fontWeight:fontWeight.highlight,
+    receiver: {
+        color: 'red',
+        fontWeight: fontWeight.highlight,
     }
 });
 

@@ -57,7 +57,7 @@ const Profile = () => {
                         type="Entypo"
                         name="dots-three-vertical"
                         size={24}
-                        onPress={() => navigation.goBack()}
+                        // onPress={() => navigation.goBack()}
                         style={{padding:10}}
                     />
                 </View>

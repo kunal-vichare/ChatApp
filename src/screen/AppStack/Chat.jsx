@@ -35,7 +35,7 @@ const Chat = () => {
                 borderRadius: 10,
                 backgroundColor: colors.primary,
                 marginHorizontal: 10,
-                marginBottom: 70,
+                // marginBottom: 70,
                 overflow: 'hidden',
                 padding: 10,
               }}

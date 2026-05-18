@@ -21,7 +21,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl }) => {
 
   const handleTextChange = (text) => {
     setMessage(text);
-    setSendEnable(true);
+    setSendEnable(text.trim().length > 0);
 
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const match = text.match(urlRegex);
@@ -79,7 +79,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl }) => {
               color={colors.secondary}
             />
             {
-              !sendEnable &&
+              !sendEnable &&(
               <>
                 <VectorIcon
                   type="FontAwesome"
@@ -95,11 +95,11 @@ const TypeBox = ({ chatroomId, setPreviewUrl }) => {
                   color={colors.secondary}
                 />
               </>
-            }
+              )}
           </View>
         </View>
 
-        <TouchableOpacity style={styles.sendButton}>
+        <TouchableOpacity style={styles.sendButton} disabled={isSending}>
           {
             !sendEnable ? (
               <VectorIcon
@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    flex:1,
     fontSize: 16,
     paddingVertical: 12,
   },
@@ -171,6 +172,7 @@ const styles = StyleSheet.create({
     elevation: 3
   },
   firstView: {
+    flex:1,
     flexDirection: 'row',
     gap: 5,
     alignItems: 'center'

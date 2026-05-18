@@ -1,13 +1,14 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import {Header,Searchbar,Chatlist, FloatingBtn} from '../../component/MainTab/Chats'
 
 const Chats = () => {
+  const [search,setSearch]=useState("");
   return (
     <View style={{flex:1}}>
       <Header/>
-      <Searchbar/>
-      <Chatlist/>
+      <Searchbar setSearch={setSearch}/>
+      <Chatlist search={search}/>
       <FloatingBtn/>
     </View>
   )
