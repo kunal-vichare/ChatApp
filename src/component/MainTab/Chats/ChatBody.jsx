@@ -1,16 +1,17 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
-import { colors } from '../../../constant';
+import { colors, fontWeight } from '../../../constant';
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 import { formatTimestamp } from '../../../utils/GetTime';
-import {Loader} from '../../../component/MainTab/Chats'
+import { Loader } from '../../../component/MainTab/Chats'
 
 const ChatBody = ({ chatroomId }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const myUid = useSelector(state => state.auth.user.uid);
+    const myName = useSelector(state => state.auth.user.name);
 
     const flatListRef = useRef(null);
 
@@ -45,9 +46,10 @@ const ChatBody = ({ chatroomId }) => {
     const UserMessageView = ({ message, time }) => (
         <View style={styles.userContainer}>
             <View style={styles.userInnerContainer}>
-                <Text style={styles.message}>{message}</Text>
-                <Text style={styles.time}>{time}</Text>
-
+                <Text style={styles.sender}>You</Text>
+                <View style={{ flexDirection: 'row',alignItems:'center' }}>
+                    <Text style={styles.message}>{message}</Text>
+                    <Text style={styles.time}>{time}</Text>
                 <VectorIcon
                     name="checkmark-done-sharp"
                     type="Ionicons"
@@ -55,15 +57,19 @@ const ChatBody = ({ chatroomId }) => {
                     size={15}
                     style={styles.doubleCheck}
                 />
+                </View>
             </View>
         </View>
     );
 
-    const OtherUserMessageView = ({ message, time }) => (
+    const OtherUserMessageView = ({ message, time, senderName }) => (
         <View style={styles.otherUserContainer}>
             <View style={styles.otherUserInnerContainer}>
-                <Text style={styles.message}>{message}</Text>
-                <Text style={styles.time}>{time}</Text>
+                <Text style={styles.receiver}>{senderName}</Text>
+                <View style={{ flexDirection: 'row',alignItems:'center'}}>
+                    <Text style={styles.message}>{message}</Text>
+                    <Text style={styles.time}>{time}</Text>
+                </View>
             </View>
         </View>
     );
@@ -80,6 +86,7 @@ const ChatBody = ({ chatroomId }) => {
             <OtherUserMessageView
                 message={item.text}
                 time={time}
+                senderName={item.senderName}
             />
         );
     };
@@ -87,34 +94,34 @@ const ChatBody = ({ chatroomId }) => {
     return (
         <View style={{ flex: 1 }}>
             {
-                loading?
-                <Loader/>
-                :
-                <FlatList
-                    ref={flatListRef}
-                    data={messages}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{
-                        paddingVertical: 10,
-                    }}
-                    onContentSizeChange={scrollToBottom}
-                    onLayout={scrollToBottom}
-                    ListEmptyComponent={
-                        <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyText}>
-                                <VectorIcon
-                                    type="Fontisto"
-                                    name='locked'
-                                    size={13}
-                                    color={colors.textGrey}
-                                />
-                                {"\u00A0"} Message and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. <Text style={{ color: 'blue', textDecorationLine: 'underline' }}>Team ChatMate</Text>
-                            </Text>
-                        </View>
-                    }
-                />
+                loading ?
+                    <Loader />
+                    :
+                    <FlatList
+                        ref={flatListRef}
+                        data={messages}
+                        renderItem={renderItem}
+                        keyExtractor={(item) => item.id}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{
+                            paddingVertical: 10,
+                        }}
+                        onContentSizeChange={scrollToBottom}
+                        onLayout={scrollToBottom}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    <VectorIcon
+                                        type="Fontisto"
+                                        name='locked'
+                                        size={13}
+                                        color={colors.textGrey}
+                                    />
+                                    {"\u00A0"} Message and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. <Text style={{ color: 'blue', textDecorationLine: 'underline' }}>Team ChatMate</Text>
+                                </Text>
+                            </View>
+                        }
+                    />
             }
 
             <TouchableOpacity
@@ -153,9 +160,10 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 30,
         borderBottomRightRadius: 30,
         borderBottomLeftRadius: 30,
-        flexDirection: 'row',
-        alignItems: 'flex-end',
+        // flexDirection: 'row',
+        // alignItems: 'flex-end',
         maxWidth: '80%',
+        gap:3
     },
 
     otherUserInnerContainer: {
@@ -165,9 +173,10 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 30,
         borderBottomRightRadius: 30,
         borderBottomLeftRadius: 30,
-        flexDirection: 'row',
-        alignItems: 'flex-end',
+        // flexDirection: 'row',
+        // alignItems: 'flex-end',
         maxWidth: '80%',
+        gap:3
     },
 
     message: {
@@ -207,6 +216,14 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         textAlign: 'center'
+    },
+    sender:{
+        color:'blue',
+        fontWeight:fontWeight.highlight,
+    },
+    receiver : {
+        color:'red',
+        fontWeight:fontWeight.highlight,
     }
 });
 

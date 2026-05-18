@@ -10,9 +10,14 @@ import { useSelector } from 'react-redux';
 
 const TypeBox = ({ chatroomId, setPreviewUrl }) => {
   const [sendEnable, setSendEnable] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const [message, setMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const data = useSelector(state => state.auth);
   const myUid = useSelector(state => state.auth.user.uid);
+  const myName = useSelector(state => state.auth.user.name);
+  // console.log("User data from redux: ",data);
+  // console.error("My name: ",myName);
+  
 
   const handleTextChange = (text) => {
     setMessage(text);
@@ -34,7 +39,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl }) => {
 
     try {
       setIsSending(true);
-      await sendMessage(chatroomId, message, myUid);
+      await sendMessage(chatroomId, message, myUid, myName);
       setMessage('');
       setSendEnable(false);
       setPreviewUrl('')

@@ -7,33 +7,48 @@ import { useDispatch, useSelector } from 'react-redux'
 import { colors } from './src/constant'
 import auth from '@react-native-firebase/auth'
 import { setLoginUser, setLogoutUser } from './src/redux/slice/auth'
+import firestore from '@react-native-firebase/firestore';
 
 const App = () => {
   const [loading, setLoading] = useState(true);
+  // const [nameDb,setNameDb]= useState(null);
   const dispatch = useDispatch();
-  const userRedux = useSelector((state) => state.auth.user);
+  // const userRedux = useSelector((state) => state.auth.user);
   const isLogged = useSelector((state) => state.auth.isLogged);
+
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(user => {
-      console.log("firebase user:", user);
-      if (user) {
-        dispatch(setLoginUser({
-          uid: user.uid,
-          email: user.email,
-          // emailVerified:
-          //   user.emailVerified,
-          // name:
-          //   user.name || '',
-        }));
-        console.log("User data in redux: ",userRedux);
-        
-      } else {
-        dispatch(setLogoutUser());
+  const unsubscribe = auth().onAuthStateChanged(async user => {
+    console.log("firebase user:", user);
+
+    if (user) {
+      try {
+        const userDoc = await firestore()
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+        const firestoreName = userDoc.data()?.name || '';
+
+        dispatch(
+          setLoginUser({
+            uid: user.uid,
+            email: user.email,
+            name: firestoreName,
+          }),
+        );
+        console.log('User data sent to redux');
+      } catch (error) {
+        console.log('Firestore error:', error);
       }
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
+    } else {
+      dispatch(setLogoutUser());
+    }
+
+    setLoading(false);
+  });
+
+  return unsubscribe;
+}, []);
 
   //   useEffect(() => {
   //   const subscription =

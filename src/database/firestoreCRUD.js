@@ -57,13 +57,13 @@ export const getOrCreateChatroom = async (myUid, otherUid) => {
     return chatroomId;
 };
 
-export const sendMessage = async (chatroomId, text, senderId) => {
+export const sendMessage = async (chatroomId, text, senderId,senderName) => {
     const msgRef = firestore()
         .collection('chats')
         .doc(chatroomId)
         .collection('messages')
         .doc();
-    await msgRef.set({ text, senderId, timestamp: Date.now() });
+    await msgRef.set({ text, senderId, senderName, timestamp: Date.now() });
     // also update lastMessage on the parent doc
     await firestore().collection('chats').doc(chatroomId).update({
         lastMessage: text,

@@ -33,8 +33,7 @@ const Login = () => {
                     password: ''
                 })
                 const userDoc = await firestore().collection('users').doc(user.uid).get();
-                // console.log("userDoc: ",userDoc.data()?.name);
-                const firestoreName = userDoc.data()?.name || 'You';
+                const firestoreName = userDoc.data()?.name || '';
                 dispatch(setLoginUser({
                     uid: user.uid,
                     email: user.email,
