@@ -11,6 +11,7 @@ import { setLoginUser, setLogoutUser } from './src/redux/slice/auth'
 const App = () => {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
+  const userRedux = useSelector((state) => state.auth.user);
   const isLogged = useSelector((state) => state.auth.isLogged);
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(user => {
@@ -19,11 +20,13 @@ const App = () => {
         dispatch(setLoginUser({
           uid: user.uid,
           email: user.email,
-          emailVerified:
-            user.emailVerified,
-          name:
-            user.name || '',
+          // emailVerified:
+          //   user.emailVerified,
+          // name:
+          //   user.name || '',
         }));
+        console.log("User data in redux: ",userRedux);
+        
       } else {
         dispatch(setLogoutUser());
       }

@@ -3,16 +3,19 @@ import React, {useState} from 'react'
 import { colors, fontFamily, fontSize, fontWeight, padding } from '../../constant';
 import TextContainer from '../../component/Authentication/TextContainer'
 import Footer from '../../component/Authentication/Footer'
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../services/auth';
 import { setLoginUser } from '../../redux/slice/auth'
+import firestore from '@react-native-firebase/firestore';
 
 const Login = () => {
     const dispatch = useDispatch();
+    const userRedux = useSelector((state) => state.auth.user);
     const [login, setLogin] = useState({
         email: '',
         password: ''
     });
+    // const myUid = useSelector(state=>state.auth.user.uid);
 
     const handleSignin = async () => {
         if (!login.email || !login.password) {
@@ -29,16 +32,20 @@ const Login = () => {
                     email: '',
                     password: ''
                 })
+                const userDoc = await firestore().collection('users').doc(user.uid).get();
+                // console.log("userDoc: ",userDoc.data()?.name);
+                const firestoreName = userDoc.data()?.name || 'You';
                 dispatch(setLoginUser({
                     uid: user.uid,
                     email: user.email,
-                    name: user.name || '',
+                    name: firestoreName,
                 }));
+                console.log("User data: ",userRedux);
             } else {
                 Alert.alert('Error', 'Email is not verified');
             }
         } catch (error) {
-            Alert.alert('Error', error.message);
+            console.log('Error', error.message);
         }
     }
     return (
