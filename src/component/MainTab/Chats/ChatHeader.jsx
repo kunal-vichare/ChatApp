@@ -8,8 +8,7 @@ import {formatWhatsAppLastSeen} from '../../../utils/GetTime'
 
 const ChatHeader = ({ userId }) => {
     const navigation = useNavigation();
-    console.log("UserId in chatHeader: ", userId);
-    const [userData, setUserData] = useState(null);
+    const [userData, setUserData] = useState(null);   
 
     useEffect(() => {
         getUserDetails();
@@ -18,7 +17,6 @@ const ChatHeader = ({ userId }) => {
     const getUserDetails = async () => {
         try {
             const usersSnapshot = await firestore().collection('users').doc(userId).get();
-            console.log("UserSnapshot", usersSnapshot.data());
             setUserData(usersSnapshot.data());
         } catch (error) {
             console.log("Error: ", error);
@@ -39,7 +37,13 @@ const ChatHeader = ({ userId }) => {
                     />
                 </View>
                 <Image source={{ uri: userData?.profileImage }} style={styles.img} />
-                <View style={styles.textContainer}>
+                <TouchableOpacity 
+                    style={styles.textContainer}
+                    onPress={()=>navigation.navigate('AppStack',{
+                        screen:'ProfileScreen',
+                        params: { userData : userData },
+                    })}
+                >
                     <Text
                         style={styles.name}
                     >
@@ -59,7 +63,7 @@ const ChatHeader = ({ userId }) => {
                                 }
                             </Text>
                     }
-                </View>
+                </TouchableOpacity>
             </View>
             <View style={styles.secondContainer}>
                 <TouchableOpacity>

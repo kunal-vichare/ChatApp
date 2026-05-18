@@ -15,7 +15,7 @@ const Clatlist = () => {
   const [loading, setLoading] = useState(false);
   const myUid = useSelector(state => state.auth.user.uid);
 
-  console.log("chatList: ", chatList);
+  // console.log("chatList: ", chatList);
 
   useEffect(() => {
 

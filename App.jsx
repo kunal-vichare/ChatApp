@@ -18,9 +18,9 @@ const App = () => {
 
   useEffect(() => {
   const unsubscribe = auth().onAuthStateChanged(async user => {
-    console.log("firebase user:", user);
+    // console.log("firebase user:", user);
 
-    if (user) {
+    if (user&&user.emailVerified) {
       try {
         const userDoc = await firestore()
           .collection('users')
@@ -33,10 +33,11 @@ const App = () => {
           setLoginUser({
             uid: user.uid,
             email: user.email,
+            emailVerified:user.emailVerified,
             name: firestoreName,
           }),
         );
-        console.log('User data sent to redux');
+        // console.log('User data sent to redux');
       } catch (error) {
         console.log('Firestore error:', error);
       }
@@ -49,6 +50,28 @@ const App = () => {
 
   return unsubscribe;
 }, []);
+
+  if (loading) {
+    return null;
+  }
+  return (
+    <NavigationContainer>
+      <StatusBar
+        backgroundColor={colors.primary}
+        barStyle="dark-content"
+      />
+      {
+        isLogged ?
+          <MainStack />
+          :
+          <AuthStack />
+      }
+    </NavigationContainer>
+  )
+}
+
+export default App
+
 
   //   useEffect(() => {
   //   const subscription =
@@ -75,24 +98,3 @@ const App = () => {
 
   //   return () => subscription.remove();
   // }, []);
-
-  if (loading) {
-    return null;
-  }
-  return (
-    <NavigationContainer>
-      <StatusBar
-        backgroundColor={colors.primary}
-        barStyle="dark-content"
-      />
-      {
-        isLogged ?
-          <MainStack />
-          :
-          <AuthStack />
-      }
-    </NavigationContainer>
-  )
-}
-
-export default App

@@ -26,7 +26,7 @@ const AllUser = () => {
   const fetchUser = async () => {
     const data = await getUsers();
     if (data) {
-      console.log("myUID: ", myUid);
+      // console.log("myUID: ", myUid);
 
       const showData = data.filter(item => item.id !== myUid);
       setUsers(showData);
@@ -34,7 +34,7 @@ const AllUser = () => {
   }
   return (
     <View>
-      <AllUserHeader />
+      <AllUserHeader length={users.length}/>
       {
         loading ?
           <Loader />

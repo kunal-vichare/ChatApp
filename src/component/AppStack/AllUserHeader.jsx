@@ -4,7 +4,7 @@ import {useNavigation} from '@react-navigation/native';
 import VectorIcon from '../../utils/VectorIcons';
 import { colors } from '../../constant';
 
-const AllUserHeader = () => {
+const AllUserHeader = ({length}) => {
   const navigation = useNavigation();
   return (
     <View style={styles.container}>
@@ -18,7 +18,7 @@ const AllUserHeader = () => {
         />
         <View>
           <Text style={styles.selectContact}>Select Contact</Text>
-          <Text style={styles.count}>23 Contacts</Text>
+          <Text style={styles.count}>{length} Contacts</Text>
         </View>
       </View>
 
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: colors.primaryColor,
-    paddingTop: 45,
+    paddingTop: 20,
     paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',

@@ -14,6 +14,7 @@ const RecentStatus = () => {
         RecentStatusData.map(item => (
           <>
             <TouchableOpacity 
+              key={item.id}
               style={styles.storySection}
               onPress={()=>navigation.navigate("AppStack",{
                 screen:"StatusScreen"

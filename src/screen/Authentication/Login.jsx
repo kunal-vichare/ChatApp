@@ -24,7 +24,7 @@ const Login = () => {
         }
         try {
             const { user, emailVerified } = await loginUser(login.email, login.password);
-            console.log("emailVerified", emailVerified);
+            // console.log("emailVerified", emailVerified);
 
             if (emailVerified) {
                 Alert.alert('Success', 'You are logged in');
@@ -39,7 +39,7 @@ const Login = () => {
                     email: user.email,
                     name: firestoreName,
                 }));
-                console.log("User data: ",userRedux);
+                // console.log("User data: ",userRedux);
             } else {
                 Alert.alert('Error', 'Email is not verified');
             }

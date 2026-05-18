@@ -1,6 +1,6 @@
 import React from 'react'
 import { createStackNavigator } from '@react-navigation/stack';
-import {AllUser,Chat,StatusScreen} from '../screen/AppStack'
+import {AllUser,Chat,StatusScreen,Profile} from '../screen/AppStack'
 import { colors } from '../constant';
 
 const Stack = createStackNavigator();
@@ -26,6 +26,13 @@ const AppStack = () => {
         <Stack.Screen 
             name="StatusScreen" 
             component={StatusScreen}
+            options={()=>({
+                headerShown:false,
+            })}
+        />
+        <Stack.Screen 
+            name="ProfileScreen" 
+            component={Profile}
             options={()=>({
                 headerShown:false,
             })}

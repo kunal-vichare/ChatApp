@@ -9,7 +9,7 @@ import {getOrCreateChatroom} from '../../../database/firestoreCRUD'
 const FlatlistRender = ({ item }) => {
     const navigation = useNavigation();
     const myUid = useSelector(state=>state.auth.user.uid);
-    console.log("item are: ",item);
+    // console.log("item are: ",item);
     
 
       const handlePress = async () => {
