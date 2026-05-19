@@ -5,15 +5,18 @@ import { colors, fontWeight } from '../../../constant';
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 import { formatTimestamp } from '../../../utils/GetTime';
-import { Loader } from '../../../component/MainTab/Chats'
+import { Loader } from '../../../component/MainTab/Chats';
+import { getChatDaySeparator } from '../../../utils/GetTime'
 
 const ChatBody = ({ chatroomId }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
-    console.log("Messages: ",messages);
-    
     const myUid = useSelector(state => state.auth.user.uid);
-    const myName = useSelector(state => state.auth.user.name);
+    const flatListRef = useRef(null);
+
+    const scrollToBottom = () => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+    };
 
     //Message grouping
     const getGroupFlags = (index) => {
@@ -27,11 +30,13 @@ const ChatBody = ({ chatroomId }) => {
         return { isFirst, isLast, isMiddle };
     }
 
-    const flatListRef = useRef(null);
-
-    const scrollToBottom = () => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-    };
+    const DateSeparator = ({ label }) => (
+        <View style={styles.dateSeparatorContainer}>
+            <Text style={styles.dateText}>
+                {label}
+            </Text>
+        </View>
+    );
 
     useEffect(() => {
         setLoading(true);
@@ -82,7 +87,7 @@ const ChatBody = ({ chatroomId }) => {
         <View style={styles.otherUserContainer}>
             <View style={styles.otherUserInnerContainer}>
                 {
-                    isFirst&&
+                    isFirst &&
                     <Text style={styles.receiver}>{senderName}</Text>
                 }
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
@@ -97,24 +102,39 @@ const ChatBody = ({ chatroomId }) => {
         const time = formatTimestamp(item.timestamp);
         const { isFirst, isLast, isMiddle } = getGroupFlags(index);
 
-        return item.senderId === myUid ? (
-            <UserMessageView
-                message={item.text}
-                time={time}
-                isFirst={isFirst}
-                isLast={isLast}
-                isMiddle={isMiddle}
-            />
-        ) : (
-            <OtherUserMessageView
-                message={item.text}
-                time={time}
-                senderName={item.senderName}
-                isFirst={isFirst}
-                isLast={isLast}
-                isMiddle={isMiddle}
-            />
-        );
+        const currentDate = new Date(item.timestamp);
+        const previousDate = index > 0
+                ? new Date(messages[index - 1].timestamp)
+                : null;
+        const separatorLabel = getChatDaySeparator(currentDate,previousDate);
+
+        return (
+            <>
+                {separatorLabel && (
+                    <DateSeparator label={separatorLabel} />
+                )}
+                {
+                    item.senderId === myUid ? (
+                        <UserMessageView
+                            message={item.text}
+                            time={time}
+                            isFirst={isFirst}
+                            isLast={isLast}
+                            isMiddle={isMiddle}
+                        />
+                    ) : (
+                        <OtherUserMessageView
+                            message={item.text}
+                            time={time}
+                            senderName={item.senderName}
+                            isFirst={isFirst}
+                            isLast={isLast}
+                            isMiddle={isMiddle}
+                        />
+                    )
+                }
+            </>
+        )
     };
 
     return (
@@ -199,8 +219,6 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 30,
         borderBottomRightRadius: 30,
         borderBottomLeftRadius: 30,
-        // flexDirection: 'row',
-        // alignItems: 'flex-end',
         maxWidth: '80%',
         gap: 3
     },
@@ -250,7 +268,21 @@ const styles = StyleSheet.create({
     receiver: {
         color: 'red',
         fontWeight: fontWeight.highlight,
-    }
+    },
+    dateSeparatorContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dateText: {
+        marginHorizontal: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 15,
+        backgroundColor: '#F2F4F5',
+        color: '#6B7C85',
+        fontSize: 12,
+    },
 });
 
 export default ChatBody;
