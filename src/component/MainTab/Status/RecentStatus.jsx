@@ -12,7 +12,6 @@ const RecentStatus = () => {
       <Text style={styles.recentUpdates}>Recent updates</Text>
       {
         RecentStatusData.map(item => (
-          <>
             <TouchableOpacity 
               key={item.id}
               style={styles.storySection}
@@ -28,7 +27,6 @@ const RecentStatus = () => {
                 <Text style={styles.time}>{item.time}</Text>
               </View>
             </TouchableOpacity>
-          </>
         ))
       }
 

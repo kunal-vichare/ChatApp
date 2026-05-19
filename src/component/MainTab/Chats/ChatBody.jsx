@@ -10,6 +10,8 @@ import { Loader } from '../../../component/MainTab/Chats'
 const ChatBody = ({ chatroomId }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
+    console.log("Messages: ",messages);
+    
     const myUid = useSelector(state => state.auth.user.uid);
     const myName = useSelector(state => state.auth.user.name);
 
@@ -79,7 +81,10 @@ const ChatBody = ({ chatroomId }) => {
     const OtherUserMessageView = ({ message, time, senderName, isFirst, isLast, isMiddle }) => (
         <View style={styles.otherUserContainer}>
             <View style={styles.otherUserInnerContainer}>
-                <Text style={styles.receiver}>{senderName}</Text>
+                {
+                    isFirst&&
+                    <Text style={styles.receiver}>{senderName}</Text>
+                }
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
                     <Text style={styles.message}>{message}</Text>
                     <Text style={styles.time}>{time}</Text>

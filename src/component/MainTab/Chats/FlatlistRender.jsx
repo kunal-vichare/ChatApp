@@ -4,20 +4,20 @@ import { StyleSheet } from 'react-native'
 import { colors, fontFamily, fontSize, fontWeight, margin, padding } from '../../../constant'
 import { useNavigation } from '@react-navigation/native'
 import { useSelector } from 'react-redux'
-import {getOrCreateChatroom} from '../../../database/firestoreCRUD'
+import { getOrCreateChatroom } from '../../../database/firestoreCRUD'
 
 const FlatlistRender = ({ item }) => {
     const navigation = useNavigation();
-    const myUid = useSelector(state=>state.auth.user.uid);
+    const myUid = useSelector(state => state.auth.user.uid);
     // console.log("item are: ",item);
-    
 
-      const handlePress = async () => {
-      const chatroomId = item.chatId
-      navigation.navigate('AppStack', {
-        screen: 'ChatScreen',
-        params: { chatroomId, otherUserId: item.id },
-      });
+
+    const handlePress = async () => {
+        const chatroomId = item.chatId
+        navigation.navigate('AppStack', {
+            screen: 'ChatScreen',
+            params: { chatroomId, otherUserId: item.id },
+        });
     };
 
     return (
@@ -34,9 +34,12 @@ const FlatlistRender = ({ item }) => {
             </View>
             <View style={styles.rightContainer}>
                 <Text style={styles.time}>{item.updatedAt}</Text>
-                {/* <View style={styles.messageCountContainer}>
-                <Text style={styles.messageCount}>4</Text>
-            </View> */}
+                {
+                    item?.unreadCount>0 &&(
+                    <View style={styles.messageCountContainer}>
+                        <Text style={styles.messageCount}>{item.unreadCount}</Text>
+                    </View>)
+                }
             </View>
         </TouchableOpacity>
     )

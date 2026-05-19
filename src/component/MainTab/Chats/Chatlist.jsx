@@ -53,7 +53,8 @@ const Clatlist = ({search}) => {
                 profileImage: userData?.profileImage,
                 lastSeen: userData?.lastSeen,
                 lastMessage: data?.lastMessage,
-                updatedAt: formatTimestamp(data?.updatedAt)
+                updatedAt: formatTimestamp(data?.updatedAt),
+                unreadCount: data?.unreadCount?.[myUid]
               };
 
             })
@@ -73,9 +74,9 @@ const Clatlist = ({search}) => {
 
   }, [myUid]);
 
-  const finalData = chatList.filter(item=>{ 
+  const finalData = chatList?.filter(item=>{ 
     //search filter
-    const searchMatch = item.name.toLowerCase().includes(search.toLowerCase());
+    const searchMatch = item?.name?.toLowerCase().includes(search?.toLowerCase());
     return searchMatch;
   })
 

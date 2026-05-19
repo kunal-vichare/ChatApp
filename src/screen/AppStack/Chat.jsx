@@ -68,7 +68,7 @@ const Chat = () => {
             />
           ) : null
         }
-      <TypeBox chatroomId={chatroomId} setPreviewUrl={setPreviewUrl} />
+      <TypeBox chatroomId={chatroomId} setPreviewUrl={setPreviewUrl} otherUserId={otherUserId} />
       </ImageBackground>
     </View>
   )

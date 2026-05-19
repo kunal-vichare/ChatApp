@@ -57,16 +57,26 @@ export const getOrCreateChatroom = async (myUid, otherUid) => {
     return chatroomId;
 };
 
-export const sendMessage = async (chatroomId, text, senderId,senderName) => {
-    const msgRef = firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .collection('messages')
-        .doc();
-    await msgRef.set({ text, senderId, senderName, timestamp: Date.now() });
-    // also update lastMessage on the parent doc
-    await firestore().collection('chats').doc(chatroomId).update({
-        lastMessage: text,
-        updatedAt: Date.now(),
-    });
+export const sendMessage = async (chatroomId, text, senderId, senderName, receiverId) => {
+    try {
+        await firestore()
+            .collection('chats')
+            .doc(chatroomId)
+            .collection('messages')
+            .add({
+                text: text,
+                senderId: senderId,
+                senderName: senderName,
+                timestamp: Date.now()
+            });
+
+        await firestore().collection('chats').doc(chatroomId).update({
+            lastMessage: text,
+            updatedAt: Date.now(),
+            [`unreadCount.${receiverId}`]: firestore.FieldValue.increment(1)
+        });
+    } catch (error) {
+        console.log('sendMessage error', error);
+        throw error;
+    }
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
@@ -8,7 +8,7 @@ import { sendMessage } from '../../../database/firestoreCRUD'
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 
-const TypeBox = ({ chatroomId, setPreviewUrl }) => {
+const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
   const [sendEnable, setSendEnable] = useState(false);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -33,13 +33,25 @@ const TypeBox = ({ chatroomId, setPreviewUrl }) => {
     }
   };
 
+  useEffect(()=>{
+    const resetUnread = async ()=>{
+      await firestore()
+      .collection('chats')
+      .doc(chatroomId)
+      .update({
+         [`unreadCount.${myUid}`]: 0,
+      })
+    }
+    resetUnread();
+  },[myUid])
+
   const handleSend = async () => {
     // !message.trim()) => removes spaces from start and end so handle sending empty spaces as message
     if (isSending || !message.trim()) return; //prevent duplicate tap
 
     try {
       setIsSending(true);
-      await sendMessage(chatroomId, message, myUid, myName);
+      await sendMessage(chatroomId, message, myUid, myName,otherUserId );
       setMessage('');
       setSendEnable(false);
       setPreviewUrl('')
