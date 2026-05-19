@@ -11,6 +11,10 @@ import { getChatDaySeparator } from '../../../utils/GetTime'
 const ChatBody = ({ chatroomId }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
+    // console.log("Messages: ",messages);
+
+    const [otherUserName, setOtherUserName] = useState('');
+    const [otherUserTyping, setOtherUserTyping] = useState(false);
     const myUid = useSelector(state => state.auth.user.uid);
     const flatListRef = useRef(null);
 
@@ -62,6 +66,56 @@ const ChatBody = ({ chatroomId }) => {
         return () => unsubscribe();
     }, [chatroomId]);
 
+    useEffect(() => {
+    const getOtherUser = async () => {
+        const chatDoc = await firestore()
+            .collection('chats')
+            .doc(chatroomId)
+            .get();
+
+        const otherUid = chatDoc
+            .data()
+            ?.participants?.find(
+                uid => uid !== myUid
+            );
+
+        if (otherUid) {
+            const userDoc = await firestore()
+                .collection('users')
+                .doc(otherUid)
+                .get();
+
+            setOtherUserName(
+                userDoc.data()?.name || 'Other'
+            );
+        }
+    };
+
+    getOtherUser();
+}, [chatroomId, myUid]);
+
+    //typing...
+   useEffect(() => {
+    const unsubscribe = firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .onSnapshot(snapshot => {
+            const data = snapshot.data();
+            const typing = data?.typing || {};
+
+            const otherUid =
+                data?.participants?.find(
+                    uid => uid !== myUid
+                );
+
+            setOtherUserTyping(
+                typing[otherUid] === true
+            );
+        });
+
+    return () => unsubscribe();
+}, [chatroomId, myUid]);
+
     const UserMessageView = ({ message, time, isFirst, isLast, isMiddle }) => (
         <View style={styles.userContainer}>
             <View style={styles.userInnerContainer}>
@@ -104,9 +158,9 @@ const ChatBody = ({ chatroomId }) => {
 
         const currentDate = new Date(item.timestamp);
         const previousDate = index > 0
-                ? new Date(messages[index - 1].timestamp)
-                : null;
-        const separatorLabel = getChatDaySeparator(currentDate,previousDate);
+            ? new Date(messages[index - 1].timestamp)
+            : null;
+        const separatorLabel = getChatDaySeparator(currentDate, previousDate);
 
         return (
             <>
@@ -168,7 +222,13 @@ const ChatBody = ({ chatroomId }) => {
                             </View>
                         }
                     />
+
             }
+            {otherUserTyping && (
+                <View style={styles.typingContainer}>
+                <Text style={styles.typingText}>{`${otherUserName} is typing...`}</Text>
+                </View>
+            )}
 
             <TouchableOpacity
                 style={styles.scrollDownArrow}
@@ -283,6 +343,13 @@ const styles = StyleSheet.create({
         color: '#6B7C85',
         fontSize: 12,
     },
+    typingContainer:{
+        alignItems:'center'
+    },
+    typingText:{
+        color:'blue',
+        fontWeight:fontWeight.highlight
+    }
 });
 
 export default ChatBody;

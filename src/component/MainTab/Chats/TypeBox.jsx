@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
@@ -13,11 +13,22 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const data = useSelector(state => state.auth);
-  const myUid = useSelector(state => state.auth.user.uid);
   const myName = useSelector(state => state.auth.user.name);
-  // console.log("User data from redux: ",data);
-  // console.error("My name: ",myName);
-  
+  const myUid = useSelector(state => state.auth.user.uid);
+  const typingTimeoutRef = useRef(null);
+
+  const updateTypingStatus = async (isTyping) => {
+    try {
+      await firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .update({
+          [`typing.${myUid}`]: isTyping,
+        });
+    } catch (error) {
+      console.log('typing update error:', error);
+    }
+  };
 
   const handleTextChange = (text) => {
     setMessage(text);
@@ -25,25 +36,45 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
 
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const match = text.match(urlRegex);
-
     if (match && match[0]) {
       setPreviewUrl(match[0]);
     } else {
       setPreviewUrl('');
     }
+
+    updateTypingStatus(true);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      updateTypingStatus(false);
+    }, 2000);
+
   };
 
-  useEffect(()=>{
-    const resetUnread = async ()=>{
+  useEffect(() => {
+    const resetUnread = async () => {
       await firestore()
-      .collection('chats')
-      .doc(chatroomId)
-      .update({
-         [`unreadCount.${myUid}`]: 0,
-      })
+        .collection('chats')
+        .doc(chatroomId)
+        .update({
+          [`unreadCount.${myUid}`]: 0,
+        })
     }
     resetUnread();
-  },[myUid])
+  }, [myUid]);
+
+  useEffect(() => {
+    return () => {
+      // Clear typing status when user leaves the screen
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      updateTypingStatus(false);
+    };
+  }, []);
 
   const handleSend = async () => {
     // !message.trim()) => removes spaces from start and end so handle sending empty spaces as message
@@ -51,17 +82,22 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
 
     try {
       setIsSending(true);
-      await sendMessage(chatroomId, message, myUid, myName,otherUserId );
+      await sendMessage(chatroomId, message, myUid, myName, otherUserId);
       setMessage('');
       setSendEnable(false);
-      setPreviewUrl('')
+      setPreviewUrl('');
+      
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      };
+      await updateTypingStatus(false);
     } catch (error) {
       console.log(error);
     } finally {
       setIsSending(false);
-    }
-
+    } 
   };
+
   return (
     <View
       style={styles.wrapper}
@@ -91,22 +127,22 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
               color={colors.secondary}
             />
             {
-              !sendEnable &&(
-              <>
-                <VectorIcon
-                  type="FontAwesome"
-                  name="rupee"
-                  size={20}
-                  color={colors.secondary}
-                  style={styles.iconStyle}
-                />
-                <VectorIcon
-                  type="FontAwesome"
-                  name="camera"
-                  size={18}
-                  color={colors.secondary}
-                />
-              </>
+              !sendEnable && (
+                <>
+                  <VectorIcon
+                    type="FontAwesome"
+                    name="rupee"
+                    size={20}
+                    color={colors.secondary}
+                    style={styles.iconStyle}
+                  />
+                  <VectorIcon
+                    type="FontAwesome"
+                    name="camera"
+                    size={18}
+                    color={colors.secondary}
+                  />
+                </>
               )}
           </View>
         </View>
@@ -169,7 +205,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    flex:1,
+    flex: 1,
     fontSize: 16,
     paddingVertical: 12,
   },
@@ -184,7 +220,7 @@ const styles = StyleSheet.create({
     elevation: 3
   },
   firstView: {
-    flex:1,
+    flex: 1,
     flexDirection: 'row',
     gap: 5,
     alignItems: 'center'
