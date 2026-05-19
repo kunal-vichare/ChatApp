@@ -1,100 +1,127 @@
-import { View, Text, StatusBar, AppState } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { NavigationContainer } from '@react-navigation/native'
-import AuthStack from './src/navigation/AuthStack'
-import MainStack from './src/navigation/MainStack'
-import { useDispatch, useSelector } from 'react-redux'
-import { colors } from './src/constant'
-import auth from '@react-native-firebase/auth'
-import { setLoginUser, setLogoutUser } from './src/redux/slice/auth'
+import { View, Text, StatusBar, AppState } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import AuthStack from './src/navigation/AuthStack';
+import MainStack from './src/navigation/MainStack';
+import { useDispatch, useSelector } from 'react-redux';
+import { colors } from './src/constant';
+import auth from '@react-native-firebase/auth';
+import { setLoginUser, setLogoutUser } from './src/redux/slice/auth';
 import firestore from '@react-native-firebase/firestore';
+import BootSplash from 'react-native-bootsplash';
+import { Loader } from './src/component/MainTab/Chats';
 
 const App = () => {
   const [loading, setLoading] = useState(true);
-  // const [nameDb,setNameDb]= useState(null);
   const dispatch = useDispatch();
-  // const userRedux = useSelector((state) => state.auth.user);
-  const isLogged = useSelector((state) => state.auth.isLogged);
+  const isLogged = useSelector(state => state.auth.isLogged);
+  const myUid = useSelector(state => state.auth.user?.uid);
 
+  //auth state handle
   useEffect(() => {
-  const unsubscribe = auth().onAuthStateChanged(async user => {
-    // console.log("firebase user:", user);
-
-    if (user&&user.emailVerified) {
+    const unsubscribe = auth().onAuthStateChanged(async user => {
       try {
-        const userDoc = await firestore()
-          .collection('users')
-          .doc(user.uid)
-          .get();
+        if (user && user.emailVerified) {
+          const userDoc = await firestore()
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
-        const firestoreName = userDoc.data()?.name || '';
+          const firestoreName = userDoc.data()?.name || '';
 
-        dispatch(
-          setLoginUser({
-            uid: user.uid,
-            email: user.email,
-            emailVerified:user.emailVerified,
-            name: firestoreName,
-          }),
-        );
-        // console.log('User data sent to redux');
+          dispatch(
+            setLoginUser({
+              uid: user.uid,
+              email: user.email,
+              emailVerified: user.emailVerified,
+              name: firestoreName,
+            }),
+          );
+
+          //mark user online on login
+          await firestore()
+            .collection('users')
+            .doc(user.uid)
+            .update({
+              isOnline: true,
+            });
+
+        } else {
+          const currentUser = auth().currentUser;
+
+          if (currentUser?.uid) {
+            await firestore()
+              .collection('users')
+              .doc(currentUser.uid)
+              .update({
+                isOnline: false,
+                lastSeen: Date.now(),
+              });
+          }
+          dispatch(setLogoutUser());
+        }
       } catch (error) {
-        console.log('Firestore error:', error);
+        console.log('Auth/Firestore error:', error);
+      } finally {
+        setLoading(false);
+        BootSplash.hide({ fade: true });
       }
-    } else {
-      dispatch(setLogoutUser());
-    }
+    });
+    return unsubscribe;
+  }, []);
 
-    setLoading(false);
-  });
+  //app state tracking
+  useEffect(() => {
+    if (!myUid) return; //dont create user if uid not exist
 
-  return unsubscribe;
-}, []);
+    const subscription = AppState.addEventListener(
+      'change',
+      async nextAppState => {
+        try {
+          //app open in foreground
+          if (nextAppState === 'active') {
+            await firestore()
+              .collection('users')
+              .doc(myUid)
+              .update({
+                isOnline: true,
+              });
+          }
+
+          //app in background/close/inactive
+          else {
+            await firestore()
+              .collection('users')
+              .doc(myUid)
+              .update({
+                isOnline: false,
+                lastSeen: Date.now(),
+              });
+          }
+        } catch (error) {
+          console.log('AppState update error:', error);
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [myUid]);
 
   if (loading) {
-    return null;
+    return <Loader/>;
   }
+
   return (
     <NavigationContainer>
       <StatusBar
         backgroundColor={colors.primary}
         barStyle="dark-content"
       />
-      {
-        isLogged ?
-          <MainStack />
-          :
-          <AuthStack />
-      }
+      {isLogged ? <MainStack /> : <AuthStack />}
     </NavigationContainer>
-  )
-}
+  );
+};
 
-export default App
-
-
-  //   useEffect(() => {
-  //   const subscription =
-  //     AppState.addEventListener(
-  //       'change',
-  //       async state => {
-  //         if (state === 'active') {
-  //           await firestore()
-  //             .collection('users')
-  //             .doc(myUid)
-  //             .update({
-  //               isOnline: true,
-  //             });
-  //         } else {
-  //           await firestore()
-  //             .collection('users')
-  //             .doc(myUid)
-  //             .update({
-  //               isOnline: false,
-  //             });
-  //         }
-  //       }
-  //     );
-
-  //   return () => subscription.remove();
-  // }, []);
+export default App;

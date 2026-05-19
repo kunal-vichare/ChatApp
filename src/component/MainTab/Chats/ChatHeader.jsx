@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { useNavigation, useRoute } from '@react-navigation/native'
+import { useNavigation} from '@react-navigation/native'
 import { colors, fontFamily, fontSize, fontWeight, iconSize, padding } from '../../../constant'
 import VectorIcon from '../../../utils/VectorIcons'
 import firestore from '@react-native-firebase/firestore';
@@ -8,20 +8,30 @@ import {formatWhatsAppLastSeen} from '../../../utils/GetTime'
 
 const ChatHeader = ({ userId }) => {
     const navigation = useNavigation();
-    const [userData, setUserData] = useState(null);   
+    const [userData, setUserData] = useState(null);  
+    console.log("userData: ",userData);
 
     useEffect(() => {
-        getUserDetails();
-    }, [userId]);
+    if (!userId) return;
 
-    const getUserDetails = async () => {
-        try {
-            const usersSnapshot = await firestore().collection('users').doc(userId).get();
-            setUserData(usersSnapshot.data());
-        } catch (error) {
-            console.log("Error: ", error);
-        }
-    }
+    // Realtime listener
+    const unsubscribe = firestore()
+        .collection('users')
+        .doc(userId)
+        .onSnapshot(
+            snapshot => {
+                if (snapshot?.data()) {
+                    setUserData(snapshot.data());
+                }
+            },
+            error => {
+                console.log('Realtime user fetch error:', error);
+            }
+        );
+
+    // Cleanup listener
+    return () => unsubscribe();
+}, [userId]);
 
     return (
         <View style={styles.container}>
@@ -123,7 +133,7 @@ const styles = StyleSheet.create({
     },
     textContainer: {
         paddingLeft: padding.base,
-        maxWidth: 175
+        maxWidth: 155,
     },
     name: {
         fontWeight: fontWeight.bold,
