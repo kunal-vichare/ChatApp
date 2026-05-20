@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
 import { colors, fontWeight } from '../../../constant';
@@ -12,22 +12,26 @@ import { getStatusIcon } from '../../../utils/GetStatusIcon'
 const ChatBody = ({ chatroomId }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
-    // console.log("Messages: ",messages);
-
+    const [lastDoc, setLastDoc] = useState(null);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [showScrollToEnd, setShowScrollToEnd] = useState(false);
     const [otherUserName, setOtherUserName] = useState('');
     const [otherUserTyping, setOtherUserTyping] = useState(false);
+
     const myUid = useSelector(state => state.auth.user.uid);
     const flatListRef = useRef(null);
+    const PAGE_SIZE = 10;
 
     const scrollToBottom = () => {
-        flatListRef.current?.scrollToEnd({ animated: true });
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     };
 
     //Message grouping
     const getGroupFlags = (index) => {
         const item = messages[index];
-        const prevMsg = messages[index - 1];
-        const nextMsg = messages[index + 1];
+        const prevMsg = messages[index + 1];
+        const nextMsg = messages[index - 1];
 
         const isFirst = !prevMsg || prevMsg.senderId !== item.senderId;
         const isLast = !nextMsg || nextMsg.senderId !== item.senderId;
@@ -43,20 +47,69 @@ const ChatBody = ({ chatroomId }) => {
         </View>
     );
 
+    const fetchMoreMessages = async () => {
+        // Stop if already loading or no more data
+        if (loadingMore || !hasMore || !lastDoc) return;
+
+        setLoadingMore(true);
+        try {
+            const snapshot = await firestore()
+                .collection('chats')
+                .doc(chatroomId)
+                .collection('messages')
+                .orderBy('timestamp', 'desc')
+                .startAfter(lastDoc)
+                .limit(PAGE_SIZE)
+                .get();
+
+            if (snapshot.empty) {
+                setHasMore(false);
+                return;
+            }
+
+            const olderMsgs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+
+            // Append older messages AFTER existing ones
+            // (inverted list shows newest at bottom)
+            setMessages(prev => [...prev, ...olderMsgs]);
+
+            // Update cursor to last fetched doc
+            setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+
+            // If fetched less than PAGE_SIZE, no more data
+            setHasMore(snapshot.docs.length === PAGE_SIZE);
+
+        } catch (error) {
+            console.log('fetchMore error:', error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
     useEffect(() => {
         setLoading(true);
         const unsubscribe = firestore()
             .collection('chats')
             .doc(chatroomId)
             .collection('messages')
-            .orderBy('timestamp')
+            .orderBy('timestamp', 'desc')
+            .limit(PAGE_SIZE)
             .onSnapshot(snapshot => {
+                if (snapshot.empty) {
+                    setLoading(false);
+                    return;
+                }
                 const msgs = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                 }));
 
                 setMessages(msgs);
+                setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+                setHasMore(snapshot.docs.length === PAGE_SIZE);
                 updateMessageStatus(msgs);
                 setLoading(false);
             },
@@ -179,16 +232,11 @@ const ChatBody = ({ chatroomId }) => {
         const { isFirst, isLast, isMiddle } = getGroupFlags(index);
 
         const currentDate = new Date(item.timestamp);
-        const previousDate = index > 0
-            ? new Date(messages[index - 1].timestamp)
-            : null;
+        const previousDate = messages[index + 1] ? new Date(messages[index + 1].timestamp) : null;
         const separatorLabel = getChatDaySeparator(currentDate, previousDate);
 
         return (
             <>
-                {separatorLabel && (
-                    <DateSeparator label={separatorLabel} />
-                )}
                 {
                     item.senderId === myUid ? (
                         <UserMessageView
@@ -210,6 +258,9 @@ const ChatBody = ({ chatroomId }) => {
                         />
                     )
                 }
+                {separatorLabel && (
+                    <DateSeparator label={separatorLabel} />
+                )}
             </>
         )
     };
@@ -229,8 +280,6 @@ const ChatBody = ({ chatroomId }) => {
                         contentContainerStyle={{
                             paddingVertical: 10,
                         }}
-                        onContentSizeChange={scrollToBottom}
-                        onLayout={scrollToBottom}
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
                                 <Text style={styles.emptyText}>
@@ -244,6 +293,26 @@ const ChatBody = ({ chatroomId }) => {
                                 </Text>
                             </View>
                         }
+                        inverted
+                        onEndReached={fetchMoreMessages}
+                        onEndReachedThreshold={0.2}
+                        onScroll={(event) => {
+                            const offsetY = event.nativeEvent.contentOffset.y;
+                            setShowScrollToEnd(offsetY > 300);
+                        }}
+                        scrollEventThrottle={16}
+                        ListFooterComponent={
+                            loadingMore ? (
+                                <View style={styles.loadingMore}>
+                                    <ActivityIndicator size="small" color={colors.secondary} />
+                                    <Text style={styles.loadingMoreText}>Loading older messages...</Text>
+                                </View>
+                            ) : !hasMore && messages.length > 0 ? (
+                                <View style={styles.noMoreContainer}>
+                                    <Text style={styles.noMoreText}>No more messages</Text>
+                                </View>
+                            ) : null
+                        }
                     />
 
             }
@@ -253,17 +322,19 @@ const ChatBody = ({ chatroomId }) => {
                 </View>
             )}
 
-            <TouchableOpacity
-                style={styles.scrollDownArrow}
-                onPress={scrollToBottom}
-            >
-                <VectorIcon
-                    name="angle-double-down"
-                    type="FontAwesome5"
-                    size={25}
-                    color={colors.secondary}
-                />
-            </TouchableOpacity>
+            {showScrollToEnd &&
+                <TouchableOpacity
+                    style={styles.scrollDownArrow}
+                    onPress={scrollToBottom}
+                >
+                    <VectorIcon
+                        name="angle-double-down"
+                        type="FontAwesome5"
+                        size={25}
+                        color={colors.secondary}
+                    />
+                </TouchableOpacity>
+            }
         </View>
     );
 };
@@ -306,20 +377,20 @@ const styles = StyleSheet.create({
         gap: 3
     },
 
-message: {
-    fontSize: 14,
-    color: '#000',
-    fontWeight: fontWeight.medium,
-    lineHeight: 20,
-    flexShrink: 1,
-},
-metaContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    marginTop: 4,
-},
+    message: {
+        fontSize: 14,
+        color: '#000',
+        fontWeight: fontWeight.medium,
+        lineHeight: 20,
+        flexShrink: 1,
+    },
+    metaContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        alignSelf: 'flex-end',
+        marginTop: 4,
+    },
 
     userTextContainer: {
         flexDirection: 'row',
@@ -331,15 +402,15 @@ metaContainer: {
         alignItems: 'center',
         justifyContent: 'space-evenly'
     },
-time: {
-    fontSize: 10,
-    color: 'grey',
-    fontWeight: fontWeight.highlight,
-},
-statusIcon: {
-    marginLeft: 4,
-    justifyContent: 'center',
-},
+    time: {
+        fontSize: 10,
+        color: 'grey',
+        fontWeight: fontWeight.highlight,
+    },
+    statusIcon: {
+        marginLeft: 4,
+        justifyContent: 'center',
+    },
 
     scrollDownArrow: {
         position: 'absolute',
@@ -392,7 +463,24 @@ statusIcon: {
     typingText: {
         color: 'blue',
         fontWeight: fontWeight.highlight
-    }
+    },
+    loadingMore: {
+        alignItems: 'center',
+        paddingVertical: 12,
+        gap: 6,
+    },
+    loadingMoreText: {
+        fontSize: 12,
+        color: colors.textGrey,
+    },
+    noMoreContainer: {
+        alignItems: 'center',
+        paddingVertical: 12,
+    },
+    noMoreText: {
+        fontSize: 12,
+        color: colors.textGrey,
+    },
 });
 
 export default ChatBody;

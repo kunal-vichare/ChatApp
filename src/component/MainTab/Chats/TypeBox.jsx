@@ -147,7 +147,11 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.sendButton} disabled={isSending}>
+        <TouchableOpacity 
+          style={styles.sendButton} 
+          disabled={isSending}
+          onPress={sendEnable? handleSend : null}
+          >
           {
             !sendEnable ? (
               <VectorIcon
@@ -167,7 +171,8 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
                 name="send"
                 size={25}
                 color={colors.primary}
-                onPress={handleSend}
+                // onPress={handleSend}
+                
               />
             )
           }
