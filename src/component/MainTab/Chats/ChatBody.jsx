@@ -67,7 +67,7 @@ const ChatBody = ({ chatroomId }) => {
                 return;
             }
 
-            const olderMsgs = snapshot.docs.map(doc => ({
+            const olderMsgs = snapshot.docs?.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
             }));

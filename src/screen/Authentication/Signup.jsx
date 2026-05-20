@@ -5,6 +5,7 @@ import TextContainer from '../../component/Authentication/TextContainer'
 import Footer from '../../component/Authentication/Footer'
 import {registerUser} from '../../services/auth'
 import {addUserData} from '../../database/firestoreCRUD'
+import {ErrorRegisterToast, FillAllFieldToast, PasswordNotMatchToast, VerificationEmailSendToast} from '../../utils/ToastMsg'
 
 const Signup = () => {
     const [signup,setSignup]=useState({
@@ -14,13 +15,14 @@ const Signup = () => {
         confirmPassword:''
     })
 
+
     const handleRegister = async ()=> {
         if (!signup.email || !signup.password) {
-            Alert.alert("Error","Please fill all the fields")
+            FillAllFieldToast();
             return;
         }
         if (signup.password!==signup.confirmPassword) {
-            Alert.alert('Error','Password not match');
+            PasswordNotMatchToast();
             return;
         }
         try {
@@ -31,14 +33,14 @@ const Signup = () => {
                 email: user.email,
                 name: signup.name,
             });
-            Alert.alert('Success','A verification email has been sent to your email address');
+            VerificationEmailSendToast();
             setSignup({
                 email:'',
                 password:'',
                 confirmPassword:''
             })
         } catch (error) {
-            Alert.alert('Error registering user: ',error.message)
+            ErrorRegisterToast(error);
         }
     };
 

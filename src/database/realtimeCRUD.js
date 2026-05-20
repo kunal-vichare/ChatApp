@@ -1,5 +1,4 @@
 import database from '@react-native-firebase/database';
-import { use } from 'react';
 
 export const addUserData = async(userData)=>{
     try {
@@ -39,3 +38,4 @@ export const deleteUser = async (id) => {
         console.log('Error deleting data',error);
     }
 }
+

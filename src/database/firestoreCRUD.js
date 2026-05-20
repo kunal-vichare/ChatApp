@@ -68,7 +68,7 @@ export const sendMessage = async (chatroomId, text, senderId, senderName, receiv
                 senderId: senderId,
                 senderName: senderName,
                 timestamp: Date.now(),
-                status:'sent'
+                status: 'sent'
             });
 
         await firestore().collection('chats').doc(chatroomId).update({
@@ -116,3 +116,15 @@ export const markAllDelivered = async (myUid) => {
         console.log('markAllDelivered error:', error);
     }
 };
+
+export const getBatchData = async (chatroomId,lastDoc,PAGE_SIZE) => {
+    const snapshot = await firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .collection('messages')
+        .orderBy('timestamp', 'desc')
+        .startAfter(lastDoc)
+        .limit(PAGE_SIZE)
+        .get();
+    return snapshot;
+}

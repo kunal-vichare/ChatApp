@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../services/auth';
 import { setLoginUser } from '../../redux/slice/auth'
 import firestore from '@react-native-firebase/firestore';
+import { EmailNotVerifiedToast, FillAllFieldToast, LoginSuccessToast } from '../../utils/ToastMsg';
 
 const Login = () => {
     const dispatch = useDispatch();
@@ -19,7 +20,7 @@ const Login = () => {
 
     const handleSignin = async () => {
         if (!login.email || !login.password) {
-            Alert.alert("Error", "Please fill all the fields")
+            FillAllFieldToast();
             return;
         }
         try {
@@ -27,7 +28,7 @@ const Login = () => {
             // console.log("emailVerified", emailVerified);
 
             if (emailVerified) {
-                Alert.alert('Success', 'You are logged in');
+                LoginSuccessToast();
                 setLogin({
                     email: '',
                     password: ''
@@ -41,7 +42,7 @@ const Login = () => {
                 }));
                 // console.log("User data: ",userRedux);
             } else {
-                Alert.alert('Error', 'Email is not verified');
+                EmailNotVerifiedToast();
             }
         } catch (error) {
             console.log('Error', error.message);

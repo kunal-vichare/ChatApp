@@ -11,6 +11,7 @@ import firestore from '@react-native-firebase/firestore';
 import BootSplash from 'react-native-bootsplash';
 import { Loader } from './src/component/MainTab/Chats';
 import {markAllDelivered} from './src/database/firestoreCRUD'
+import Toast from 'react-native-toast-message';
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -125,6 +126,7 @@ const App = () => {
         barStyle="dark-content"
       />
       {isLogged ? <MainStack /> : <AuthStack />}
+      <Toast />
     </NavigationContainer>
   );
 };

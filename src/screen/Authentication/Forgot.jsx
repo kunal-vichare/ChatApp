@@ -3,30 +3,23 @@ import {View,Text,Alert,StyleSheet,KeyboardAvoidingView,Platform,ScrollView,Touc
 import { Button, TextInput } from 'react-native-paper';
 import { resetPassword } from '../../services/auth';
 import {colors,fontFamily,fontSize,fontWeight,padding} from '../../constant';
+import { ErrorForgotToast, fillEmailToast, PasswordResendSendToast } from '../../utils/ToastMsg';
 
 const Forgot = () => {
   const [email, setEmail] = useState('');
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      Alert.alert(
-        'Error',
-        'Please enter your email address'
-      );
+      fillEmailToast();
       return;
     }
 
     try {
       await resetPassword(email);
-
-      Alert.alert(
-        'Success',
-        'Password reset link has been sent to your email address'
-      );
-
+      PasswordResendSendToast();
       setEmail('');
     } catch (error) {
-      Alert.alert('Error', error.message);
+      ErrorForgotToast(error);
     }
   };
 
