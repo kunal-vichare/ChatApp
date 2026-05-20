@@ -29,7 +29,7 @@ const FlatlistRender = ({ item }) => {
                 <Image source={{ uri: item.profileImage }} style={styles.image} />
                 <View style={styles.msgContainer}>
                     <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.message}>{item.lastMessage}</Text>
+                    <Text style={styles.message} ellipsizeMode='tail' numberOfLines={2}>{item.lastMessage}</Text>
                 </View>
             </View>
             <View style={styles.rightContainer}>
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginVertical: margin.md,
         alignItems: 'center',
-        flex: 1
+        flex: 1,
     },
     image: {
         height: 54,
@@ -72,7 +72,9 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.medium,
         fontSize: fontSize.base,
         color: colors.message,
-        fontFamily: fontFamily.popinsBold
+        fontFamily: fontFamily.popinsBold,
+        // backgroundColor:'red',
+        // maxWidth:'65%'
     },
     time: {
         color: colors.time,
@@ -100,6 +102,7 @@ const styles = StyleSheet.create({
     },
     leftContainer: {
         flexDirection: 'row',
+        maxWidth:'60%'
     },
 })
 

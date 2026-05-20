@@ -10,6 +10,7 @@ import { setLoginUser, setLogoutUser } from './src/redux/slice/auth';
 import firestore from '@react-native-firebase/firestore';
 import BootSplash from 'react-native-bootsplash';
 import { Loader } from './src/component/MainTab/Chats';
+import {markAllDelivered} from './src/database/firestoreCRUD'
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,8 @@ const App = () => {
   //auth state handle
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async user => {
+      // console.log("user",user);
+      
       try {
         if (user && user.emailVerified) {
           const userDoc = await firestore()
@@ -45,6 +48,7 @@ const App = () => {
             .update({
               isOnline: true,
             });
+          await markAllDelivered(user.uid);
 
         } else {
           const currentUser = auth().currentUser;
@@ -86,6 +90,7 @@ const App = () => {
               .update({
                 isOnline: true,
               });
+              await markAllDelivered(myUid);
           }
 
           //app in background/close/inactive

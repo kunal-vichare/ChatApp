@@ -67,7 +67,8 @@ export const sendMessage = async (chatroomId, text, senderId, senderName, receiv
                 text: text,
                 senderId: senderId,
                 senderName: senderName,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                status:'sent'
             });
 
         await firestore().collection('chats').doc(chatroomId).update({
@@ -78,5 +79,40 @@ export const sendMessage = async (chatroomId, text, senderId, senderName, receiv
     } catch (error) {
         console.log('sendMessage error', error);
         throw error;
+    }
+};
+
+export const markAllDelivered = async (myUid) => {
+    try {
+        const chatsSnap = await firestore()
+            .collection('chats')
+            .where('participants', 'array-contains', myUid)
+            .get();
+
+        for (const chatDoc of chatsSnap.docs) {
+
+            // Only one where clause — no composite index needed
+            const sentMsgs = await firestore()
+                .collection('chats')
+                .doc(chatDoc.id)
+                .collection('messages')
+                .where('status', '==', 'sent')
+                .get();
+
+            if (sentMsgs.empty) continue;
+
+            const batch = firestore().batch();
+
+            sentMsgs.docs.forEach(doc => {
+                // Filter out MY own messages in JS instead of Firestore
+                if (doc.data().senderId !== myUid) {
+                    batch.update(doc.ref, { status: 'delivered' });
+                }
+            });
+
+            await batch.commit();
+        }
+    } catch (error) {
+        console.log('markAllDelivered error:', error);
     }
 };

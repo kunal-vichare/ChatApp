@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { formatTimestamp } from '../../../utils/GetTime';
 import { Loader } from '../../../component/MainTab/Chats';
 import { getChatDaySeparator } from '../../../utils/GetTime'
+import { getStatusIcon } from '../../../utils/GetStatusIcon'
 
 const ChatBody = ({ chatroomId }) => {
     const [loading, setLoading] = useState(false);
@@ -56,6 +57,7 @@ const ChatBody = ({ chatroomId }) => {
                 }));
 
                 setMessages(msgs);
+                updateMessageStatus(msgs);
                 setLoading(false);
             },
                 error => {
@@ -67,71 +69,91 @@ const ChatBody = ({ chatroomId }) => {
     }, [chatroomId]);
 
     useEffect(() => {
-    const getOtherUser = async () => {
-        const chatDoc = await firestore()
-            .collection('chats')
-            .doc(chatroomId)
-            .get();
-
-        const otherUid = chatDoc
-            .data()
-            ?.participants?.find(
-                uid => uid !== myUid
-            );
-
-        if (otherUid) {
-            const userDoc = await firestore()
-                .collection('users')
-                .doc(otherUid)
+        const getOtherUser = async () => {
+            const chatDoc = await firestore()
+                .collection('chats')
+                .doc(chatroomId)
                 .get();
 
-            setOtherUserName(
-                userDoc.data()?.name || 'Other'
-            );
-        }
-    };
-
-    getOtherUser();
-}, [chatroomId, myUid]);
-
-    //typing...
-   useEffect(() => {
-    const unsubscribe = firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .onSnapshot(snapshot => {
-            const data = snapshot.data();
-            const typing = data?.typing || {};
-
-            const otherUid =
-                data?.participants?.find(
+            const otherUid = chatDoc
+                .data()
+                ?.participants?.find(
                     uid => uid !== myUid
                 );
 
-            setOtherUserTyping(
-                typing[otherUid] === true
-            );
+            if (otherUid) {
+                const userDoc = await firestore()
+                    .collection('users')
+                    .doc(otherUid)
+                    .get();
+
+                setOtherUserName(
+                    userDoc.data()?.name || 'Other'
+                );
+            }
+        };
+
+        getOtherUser();
+    }, [chatroomId, myUid]);
+
+    //typing...
+    useEffect(() => {
+        const unsubscribe = firestore()
+            .collection('chats')
+            .doc(chatroomId)
+            .onSnapshot(snapshot => {
+                const data = snapshot.data();
+                const typing = data?.typing || {};
+
+                const otherUid =
+                    data?.participants?.find(
+                        uid => uid !== myUid
+                    );
+
+                setOtherUserTyping(
+                    typing[otherUid] === true
+                );
+            });
+
+        return () => unsubscribe();
+    }, [chatroomId, myUid]);
+
+
+    //delievery status
+    const updateMessageStatus = async (msgs) => {
+        const batch = firestore().batch();
+
+        msgs.forEach(msg => {
+            // Only update messages sent by OTHER user, not mine
+            if (msg.senderId === myUid) return;
+
+            if (msg.status === 'sent' || msg.status === 'delivered') {
+                const msgRef = firestore()
+                    .collection('chats')
+                    .doc(chatroomId)
+                    .collection('messages')
+                    .doc(msg.id);
+
+                // Receiver got the message → delivered
+                batch.update(msgRef, { status: 'read' });
+            }
         });
 
-    return () => unsubscribe();
-}, [chatroomId, myUid]);
+        await batch.commit();
+    };
 
-    const UserMessageView = ({ message, time, isFirst, isLast, isMiddle }) => (
+    const UserMessageView = ({ message, time, isFirst, isLast, isMiddle, status }) => (
         <View style={styles.userContainer}>
             <View style={styles.userInnerContainer}>
                 {isFirst && (
                     <Text style={styles.sender}>You</Text>
                 )}
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={styles.message}>{message}</Text>
+                <Text style={styles.message}>{message}</Text>
+                <View style={styles.metaContainer}>
                     <Text style={styles.time}>{time}</Text>
-                    <VectorIcon
-                        name="checkmark-done-sharp"
-                        type="Ionicons"
-                        color={colors.blue}
-                        size={15}
-                        style={styles.doubleCheck}
-                    />
+                    <View style={styles.statusIcon}>
+                        {getStatusIcon(status)}
+                    </View>
                 </View>
             </View>
         </View>
@@ -144,8 +166,8 @@ const ChatBody = ({ chatroomId }) => {
                     isFirst &&
                     <Text style={styles.receiver}>{senderName}</Text>
                 }
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
-                    <Text style={styles.message}>{message}</Text>
+                <Text style={styles.message}>{message}</Text>
+                <View style={styles.metaContainer}>
                     <Text style={styles.time}>{time}</Text>
                 </View>
             </View>
@@ -175,6 +197,7 @@ const ChatBody = ({ chatroomId }) => {
                             isFirst={isFirst}
                             isLast={isLast}
                             isMiddle={isMiddle}
+                            status={item.status}
                         />
                     ) : (
                         <OtherUserMessageView
@@ -226,7 +249,7 @@ const ChatBody = ({ chatroomId }) => {
             }
             {otherUserTyping && (
                 <View style={styles.typingContainer}>
-                <Text style={styles.typingText}>{`${otherUserName} is typing...`}</Text>
+                    <Text style={styles.typingText}>{`${otherUserName} is typing...`}</Text>
                 </View>
             )}
 
@@ -269,7 +292,7 @@ const styles = StyleSheet.create({
         // flexDirection: 'row',
         // alignItems: 'flex-end',
         maxWidth: '80%',
-        gap: 3
+        // gap: 3
     },
 
     otherUserInnerContainer: {
@@ -283,20 +306,40 @@ const styles = StyleSheet.create({
         gap: 3
     },
 
-    message: {
-        fontSize: 13,
-        color: colors.white,
-    },
+message: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: fontWeight.medium,
+    lineHeight: 20,
+    flexShrink: 1,
+},
+metaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginTop: 4,
+},
 
-    time: {
-        fontSize: 9,
-        color: colors.white,
-        marginLeft: 5,
+    userTextContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-evenly',
     },
-
-    doubleCheck: {
-        marginLeft: 5,
+    otherTextContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-evenly'
     },
+time: {
+    fontSize: 10,
+    color: 'grey',
+    fontWeight: fontWeight.highlight,
+},
+statusIcon: {
+    marginLeft: 4,
+    justifyContent: 'center',
+},
 
     scrollDownArrow: {
         position: 'absolute',
@@ -343,12 +386,12 @@ const styles = StyleSheet.create({
         color: '#6B7C85',
         fontSize: 12,
     },
-    typingContainer:{
-        alignItems:'center'
+    typingContainer: {
+        alignItems: 'center'
     },
-    typingText:{
-        color:'blue',
-        fontWeight:fontWeight.highlight
+    typingText: {
+        color: 'blue',
+        fontWeight: fontWeight.highlight
     }
 });
 
