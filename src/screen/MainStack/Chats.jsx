@@ -3,12 +3,16 @@ import React, { useState } from 'react'
 import {Header,Searchbar,Chatlist, FloatingBtn} from '../../component/MainTab/Chats'
 
 const Chats = () => {
-  const [search,setSearch]=useState("");
+  const [chatroomSearch,setChatroomSearch]=useState("");
   return (
     <View style={{flex:1}}>
       <Header/>
-      <Searchbar setSearch={setSearch}/>
-      <Chatlist search={search}/>
+      <Searchbar 
+      value={chatroomSearch}
+      onSearch={setChatroomSearch}
+      placeholder="Ask Meta AI or Search"
+      />
+      <Chatlist search={chatroomSearch}/>
       <FloatingBtn/>
     </View>
   )

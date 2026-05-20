@@ -24,13 +24,6 @@ const AllUserHeader = ({length}) => {
 
       <View style={styles.headerContainer}>
         <VectorIcon
-          type="Ionicons"
-          name="search"
-          color={colors.white}
-          size={20}
-          style={styles.iconStyle}
-        />
-        <VectorIcon
           type="Entypo"
           name="dots-three-vertical"
           color={colors.white}
@@ -53,7 +46,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-
+    marginBottom:'3%'
   },
   selectContact: {
     fontSize: 17,

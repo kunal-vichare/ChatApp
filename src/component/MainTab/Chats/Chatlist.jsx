@@ -53,6 +53,7 @@ const Clatlist = ({search}) => {
                 profileImage: userData?.profileImage,
                 lastSeen: userData?.lastSeen,
                 lastMessage: data?.lastMessage,
+                // isOnline:data?.isOnline,
                 updatedAt: formatTimestamp(data?.updatedAt),
                 unreadCount: data?.unreadCount?.[myUid]
               };

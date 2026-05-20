@@ -5,6 +5,7 @@ import { colors, fontFamily, fontSize, fontWeight, margin, padding } from '../..
 import { useNavigation } from '@react-navigation/native'
 import { useSelector } from 'react-redux'
 import { getOrCreateChatroom } from '../../../database/firestoreCRUD'
+import VectorIcon from '../../../utils/VectorIcons'
 
 const FlatlistRender = ({ item }) => {
     const navigation = useNavigation();
@@ -26,7 +27,18 @@ const FlatlistRender = ({ item }) => {
             onPress={handlePress}
         >
             <View style={styles.leftContainer}>
-                <Image source={{ uri: item.profileImage }} style={styles.image} />
+                <View>
+                    <Image source={{ uri: item.profileImage }} style={styles.image} />
+                    { !item.isOnline &&
+                        <VectorIcon
+                            type="Octicons"
+                            name="dot-fill"
+                            color='#57bc32'
+                            size={30}
+                            style={styles.onlIcon}
+                        />
+                    }
+                </View>
                 <View style={styles.msgContainer}>
                     <Text style={styles.name}>{item.name}</Text>
                     <Text style={styles.message} ellipsizeMode='tail' numberOfLines={2}>{item.lastMessage}</Text>
@@ -35,10 +47,10 @@ const FlatlistRender = ({ item }) => {
             <View style={styles.rightContainer}>
                 <Text style={styles.time}>{item.updatedAt}</Text>
                 {
-                    item?.unreadCount>0 &&(
-                    <View style={styles.messageCountContainer}>
-                        <Text style={styles.messageCount}>{item.unreadCount}</Text>
-                    </View>)
+                    item?.unreadCount > 0 && (
+                        <View style={styles.messageCountContainer}>
+                            <Text style={styles.messageCount}>{item.unreadCount}</Text>
+                        </View>)
                 }
             </View>
         </TouchableOpacity>
@@ -102,8 +114,14 @@ const styles = StyleSheet.create({
     },
     leftContainer: {
         flexDirection: 'row',
-        maxWidth:'60%'
+        maxWidth: '60%'
     },
+    onlIcon: {
+        position: 'absolute',
+        bottom: 0,
+        right: 10,
+
+    }
 })
 
 export default FlatlistRender

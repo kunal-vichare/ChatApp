@@ -20,7 +20,7 @@ const BottomTab = () => {
       iconName = focused ? 'people' : 'people-outline'
     }
     else if (routeName === 'StatusScreen') {
-      iconName = focused ? 'people' : 'people-outline'
+      iconName = focused ?  'chatbubble-ellipses-sharp' : 'chatbubble-ellipses-outline'
     }
     else if (routeName === 'CallsScreen') {
       iconName = focused ? 'call' : 'call-outline'
