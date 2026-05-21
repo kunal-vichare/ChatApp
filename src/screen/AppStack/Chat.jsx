@@ -11,6 +11,7 @@ const Chat = () => {
   const route = useRoute();
   const [previewUrl, setPreviewUrl] = useState('');
   const [failedMessages, setFailedMessages] = useState([]);
+  const [localMessages, setLocalMessages]   = useState([]);
 
   const { chatroomId, otherUserId } = route.params;
 
@@ -22,7 +23,8 @@ const Chat = () => {
       />
       <ChatHeader userId={otherUserId} />
       <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
-        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId}/>
+        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId}         localMessages={localMessages}
+      />
         {
           previewUrl ? (
             <LinkPreview
@@ -73,16 +75,25 @@ const Chat = () => {
         chatroomId={chatroomId} 
         setPreviewUrl={setPreviewUrl} 
         otherUserId={otherUserId} 
-        onFail={(text)=>{
-          setFailedMessages(prev=>[
-            ...prev,
-            {
-              id:Date.now().toString(),
-              text:text,
-              timestamp : new Date(),
-            }
-          ])
+        onAddLocalMessage={(msg) => {
+          setLocalMessages(prev => [msg, ...prev]);
         }}
+        onRemoveLocalMessage={(tempId) => {
+          setLocalMessages(prev =>
+            prev.filter(m => m.id !== tempId)
+        );
+        }}
+        onFail={(tempId, text) => {
+        // Remove from local
+        setLocalMessages(prev =>
+            prev.filter(m => m.id !== tempId)
+        );
+        // Add to failed
+        setFailedMessages(prev => [
+            ...prev,
+            { id: tempId, text, timestamp: new Date() }
+        ]);
+    }}
       />
       </ImageBackground>
     </View>

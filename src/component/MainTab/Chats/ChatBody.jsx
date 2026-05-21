@@ -11,21 +11,21 @@ import { getStatusIcon } from '../../../utils/GetStatusIcon';
 import {sendMessage} from '../../../database/firestoreCRUD'
 import {FailedMessage} from '../../../component/MainTab/Chats'
 
-const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId}) => {
+const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId,localMessages}) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [lastDoc, setLastDoc] = useState(null);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [showScrollToEnd, setShowScrollToEnd] = useState(false);
-    const [otherUserName, setOtherUserName] = useState('');
     const [retrying, setRetrying] = useState(false);
+    const [otherUserName, setOtherUserName] = useState('');
     const [otherUserTyping, setOtherUserTyping] = useState(false);
 
     const myUid = useSelector(state => state.auth.user.uid);
     const myName = useSelector((state)=>state.auth.user.name);
-    // console.log("MyName: ",myName);
     
+    const allMessages = [...localMessages,...messages];
     const flatListRef = useRef(null);
     const PAGE_SIZE = 10;
 
@@ -312,7 +312,7 @@ const updateMessageStatus = async (msgs) => {
                     :
                     <FlatList
                         ref={flatListRef}
-                        data={messages}
+                        data={allMessages}
                         renderItem={renderItem}
                         keyExtractor={(item) => item.id}
                         showsVerticalScrollIndicator={false}
@@ -514,8 +514,8 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     typingText: {
-        color: 'blue',
-        fontWeight: fontWeight.highlight
+        color: '#17860b',
+        fontWeight: fontWeight.bold
     },
     loadingMore: {
         alignItems: 'center',
