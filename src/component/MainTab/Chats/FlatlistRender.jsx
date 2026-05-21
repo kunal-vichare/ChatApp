@@ -29,7 +29,7 @@ const FlatlistRender = ({ item }) => {
             <View style={styles.leftContainer}>
                 <View>
                     <Image source={{ uri: item.profileImage }} style={styles.image} />
-                    { !item.isOnline &&
+                    { item.isOnline &&
                         <VectorIcon
                             type="Octicons"
                             name="dot-fill"

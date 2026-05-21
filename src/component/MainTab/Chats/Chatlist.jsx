@@ -10,76 +10,92 @@ import VectorIcon from '../../../utils/VectorIcons'
 import { Loader } from '../../../component/MainTab/Chats'
 import useColors from '../../../hook/useColors'
 
-const Clatlist = ({search}) => {
-  const colors = useColors();
-  const styles = createStyles(colors);
+const Chatlist = ({ search }) => {
+    const colors = useColors();
+    const styles = createStyles(colors);
 
-  const [chatList, setChatList] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const myUid = useSelector(state => state.auth.user.uid);
+    const [chatList, setChatList] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const myUid = useSelector(state => state.auth.user.uid);
 
-  console.log("chatList: ", chatList);
+    useEffect(() => {
+        const unsubscribers = [];
 
-  useEffect(() => {
+        //chat collection
+        const unsubscribeChats = firestore()
+            .collection('chats')
+            .where('participants', 'array-contains', myUid)
+            .onSnapshot(snapshot => {
 
-    const unsubscribe = firestore()
-      .collection('chats')
-      .where('participants', 'array-contains', myUid)
-      .onSnapshot(async snapshot => {
+                snapshot.docs.forEach(chatDoc => {
+                    const data = chatDoc.data();
+                    const chatId = chatDoc.id;
+                    const otherUid = data.participants.find(uid => uid !== myUid);
 
-        try {
+                    //userDoc for each chat
+                    const unsubscribeUser = firestore()
+                        .collection('users')
+                        .doc(otherUid)
+                        .onSnapshot(userDoc => {
+                            const userData = userDoc.data();
 
-          setLoading(true);
-          const chatData = await Promise.all(
-            snapshot.docs.map(async chatDoc => {
+                            // Update only this specific chat in state
+                            setChatList(prev => {
+                                const existingIndex = prev.findIndex(
+                                    c => c.chatId === chatId
+                                );
 
-              const data = chatDoc.data();
+                                const updatedChat = {
+                                    chatId,
+                                    id: userData?.uid,
+                                    name: userData?.name,
+                                    profileImage: userData?.profileImage,
+                                    lastSeen: userData?.lastSeen,
+                                    isOnline: userData?.isOnline,
+                                    lastMessage: data?.lastMessage,
+                                    updatedAt: formatTimestamp(data?.updatedAt),
+                                    unreadCount:  data?.unreadCount?.[myUid] || 0,
+                                };
 
-              const otherUserUid = data.participants.find(
-                uid => uid !== myUid
-              );
+                                if (existingIndex !== -1) {
+                                    const updated = [...prev];
+                                    updated[existingIndex] = updatedChat;
+                                    return updated;
+                                } else {
+                                    return [...prev, updatedChat];
+                                }
+                            });
+                            setLoading(false);
+                        });
+                    unsubscribers.push(unsubscribeUser);
+                });
 
-              const userDoc = await firestore()
-                .collection('users')
-                .doc(otherUserUid)
-                .get();
+                // Handle empty snapshot
+                if (snapshot.empty) {
+                    setLoading(false);
+                }
+            });
 
-              const userData = userDoc.data();
+        unsubscribers.push(unsubscribeChats);
 
-              return {
-                chatId: chatDoc.id,
-                id: userData?.uid,
-                name: userData?.name,
-                profileImage: userData?.profileImage,
-                lastSeen: userData?.lastSeen,
-                lastMessage: data?.lastMessage,
-                // isOnline:data?.isOnline,
-                updatedAt: formatTimestamp(data?.updatedAt),
-                unreadCount: data?.unreadCount?.[myUid]
-              };
+        // Cleanup ALL listeners on unmount
+        return () => {
+            unsubscribers.forEach(unsub => unsub());
+        };
 
-            })
-          );
+    }, [myUid]);
 
-          setChatList(chatData);
+    // Sort by latest message
+    const sortedList = [...chatList].sort((a, b) => {
+        if (!a.updatedAt) return 1;
+        if (!b.updatedAt) return -1;
+        return b.updatedAt - a.updatedAt;
+    });
 
-        } catch (error) {
-          console.log(error);
-        } finally {
-          setLoading(false);
-        }
-
-      });
-
-    return () => unsubscribe();
-
-  }, [myUid]);
-
-  const finalData = chatList?.filter(item=>{ 
-    //search filter
-    const searchMatch = item?.name?.toLowerCase().includes(search?.toLowerCase());
-    return searchMatch;
-  })
+    // Search filter
+    const finalData = sortedList.filter(item =>
+        item?.name?.toLowerCase().includes(search?.toLowerCase() || '')
+    );
 
   return (
     <View style={styles.container}>
@@ -93,7 +109,7 @@ const Clatlist = ({search}) => {
             renderItem={({ item }) => (
               <FlatlistRender item={item} />
             )}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.chatId}
             contentContainerStyle={{ paddingBottom: 200 }}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
@@ -150,4 +166,4 @@ const createStyles = (colors) => StyleSheet.create({
   }
 })
 
-export default Clatlist
+export default Chatlist
