@@ -35,9 +35,9 @@ const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId,loca
 
     //Message grouping
     const getGroupFlags = (index) => {
-        const item = messages[index];
-        const prevMsg = messages[index + 1];
-        const nextMsg = messages[index - 1];
+        const item = allMessages[index];
+        const prevMsg = allMessages[index + 1];
+        const nextMsg = allMessages[index - 1];
 
         const isFirst = !prevMsg || prevMsg.senderId !== item.senderId;
         const isLast = !nextMsg || nextMsg.senderId !== item.senderId;
@@ -190,8 +190,7 @@ const updateMessageStatus = async (msgs) => {
                 .collection('chats')
                 .doc(chatroomId)
                 .collection('messages')
-                .doc(msg.id);
-
+                .doc(msg.id);            
             batch.update(msgRef, { status: 'read' });
             hasUpdates = true;
         }
@@ -242,7 +241,7 @@ const updateMessageStatus = async (msgs) => {
                 )}
                 <Text style={styles.message}>{message}</Text>
                 <View style={styles.metaContainer}>
-                    <Text style={styles.time}>{time}</Text>
+                    <Text style={styles.time}>{status!=='pending' ? time : null}</Text>
                     <View style={styles.statusIcon}>
                         {getStatusIcon(status)}
                     </View>
@@ -267,12 +266,14 @@ const updateMessageStatus = async (msgs) => {
     );
 
     const renderItem = ({ item, index }) => {
+        // console.log("item: ",item);
+        
         const time = formatTimestamp(item.timestamp);
         const { isFirst, isLast, isMiddle } = getGroupFlags(index);
 
-        const currentDate = new Date(item.timestamp);
-        const previousDate = messages[index + 1] ? new Date(messages[index + 1].timestamp) : null;
-        const separatorLabel = getChatDaySeparator(currentDate, previousDate);
+        const currentDate = new Date(item.timestamp) || null;
+        const previousDate = allMessages[index + 1] ? new Date(allMessages[index + 1].timestamp) : null;
+        const separatorLabel = (currentDate && previousDate) ? getChatDaySeparator(currentDate, previousDate) : null;
 
         return (
             <>
@@ -297,9 +298,9 @@ const updateMessageStatus = async (msgs) => {
                         />
                     )
                 }
-                {separatorLabel && (
-                    <DateSeparator label={separatorLabel} />
-                )}
+                {(separatorLabel && item.status!=='pending') ? 
+                    <DateSeparator label={separatorLabel} /> : null
+                }
             </>
         )
     };
