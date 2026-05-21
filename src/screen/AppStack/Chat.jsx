@@ -5,13 +5,14 @@ import { colors } from '../../constant'
 import WpWallpaper from '../../assets/image/wpBackground.png'
 import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
+import { Timestamp } from '@react-native-firebase/firestore'
 
 const Chat = () => {
   const route = useRoute();
   const [previewUrl, setPreviewUrl] = useState('');
+  const [failedMessages, setFailedMessages] = useState([]);
 
   const { chatroomId, otherUserId } = route.params;
-  // console.log("ChatroomID: ",chatroomId,"otherUserId: ",otherUserId);
 
   return (
     <View style={{ flex: 1 }}>
@@ -21,7 +22,7 @@ const Chat = () => {
       />
       <ChatHeader userId={otherUserId} />
       <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
-        <ChatBody chatroomId={chatroomId} />
+        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId}/>
         {
           previewUrl ? (
             <LinkPreview
@@ -68,7 +69,21 @@ const Chat = () => {
             />
           ) : null
         }
-      <TypeBox chatroomId={chatroomId} setPreviewUrl={setPreviewUrl} otherUserId={otherUserId} />
+      <TypeBox 
+        chatroomId={chatroomId} 
+        setPreviewUrl={setPreviewUrl} 
+        otherUserId={otherUserId} 
+        onFail={(text)=>{
+          setFailedMessages(prev=>[
+            ...prev,
+            {
+              id:Date.now().toString(),
+              text:text,
+              timestamp : new Date(),
+            }
+          ])
+        }}
+      />
       </ImageBackground>
     </View>
   )

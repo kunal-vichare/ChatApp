@@ -7,9 +7,11 @@ import { useSelector } from 'react-redux';
 import { formatTimestamp } from '../../../utils/GetTime';
 import { Loader } from '../../../component/MainTab/Chats';
 import { getChatDaySeparator } from '../../../utils/GetTime'
-import { getStatusIcon } from '../../../utils/GetStatusIcon'
+import { getStatusIcon } from '../../../utils/GetStatusIcon';
+import {sendMessage} from '../../../database/firestoreCRUD'
+import {FailedMessage} from '../../../component/MainTab/Chats'
 
-const ChatBody = ({ chatroomId }) => {
+const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId}) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [lastDoc, setLastDoc] = useState(null);
@@ -17,9 +19,13 @@ const ChatBody = ({ chatroomId }) => {
     const [hasMore, setHasMore] = useState(true);
     const [showScrollToEnd, setShowScrollToEnd] = useState(false);
     const [otherUserName, setOtherUserName] = useState('');
+    const [retrying, setRetrying] = useState(false);
     const [otherUserTyping, setOtherUserTyping] = useState(false);
 
     const myUid = useSelector(state => state.auth.user.uid);
+    const myName = useSelector((state)=>state.auth.user.name);
+    // console.log("MyName: ",myName);
+    
     const flatListRef = useRef(null);
     const PAGE_SIZE = 10;
 
@@ -195,6 +201,30 @@ const ChatBody = ({ chatroomId }) => {
         await batch.commit();
     };
 
+    const handleRetry = async (failedMsg) => {
+    setRetrying(true);
+    try {
+        await sendMessage(
+            chatroomId,
+            failedMsg.text,
+            myUid,
+            myName,
+            otherUserId
+        );
+
+        // Success — remove from failed list
+        setFailedMessages(prev =>
+            prev.filter(m => m.id !== failedMsg.id)
+        );
+
+    } catch (error) {
+        // Still failed — keep in list
+        console.log('retry failed:', error);
+    } finally {
+        setRetrying(false);
+    }
+};
+
     const UserMessageView = ({ message, time, isFirst, isLast, isMiddle, status }) => (
         <View style={styles.userContainer}>
             <View style={styles.userInnerContainer}>
@@ -316,6 +346,20 @@ const ChatBody = ({ chatroomId }) => {
                     />
 
             }
+              {failedMessages.map(msg => (
+            <FailedMessage
+                key={msg.id}
+                msg={msg}
+                onRetry={handleRetry}
+                //remove from list if dismiss
+                onDismiss={() => {
+                    setFailedMessages(prev =>
+                        prev.filter(m => m.id !== msg.id)
+                    );
+                }}
+                retrying={retrying}
+            />
+        ))}
             {otherUserTyping && (
                 <View style={styles.typingContainer}>
                     <Text style={styles.typingText}>{`${otherUserName} is typing...`}</Text>

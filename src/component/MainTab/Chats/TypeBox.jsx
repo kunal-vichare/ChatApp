@@ -8,7 +8,7 @@ import { sendMessage } from '../../../database/firestoreCRUD'
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 
-const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
+const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onFail }) => {
   const [sendEnable, setSendEnable] = useState(false);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -79,7 +79,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
   const handleSend = async () => {
     // !message.trim()) => removes spaces from start and end so handle sending empty spaces as message
     if (isSending || !message.trim()) return; //prevent duplicate tap
-
+    const msgText = message;
     try {
       setIsSending(true);
       await sendMessage(chatroomId, message, myUid, myName, otherUserId);
@@ -93,6 +93,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId }) => {
       await updateTypingStatus(false);
     } catch (error) {
       console.log(error);
+      onFail?.(msgText);
     } finally {
       setIsSending(false);
     } 

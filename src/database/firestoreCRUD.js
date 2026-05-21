@@ -59,6 +59,7 @@ export const getOrCreateChatroom = async (myUid, otherUid) => {
 
 export const sendMessage = async (chatroomId, text, senderId, senderName, receiverId) => {
     try {
+        // throw new error(Simulatederror);
         await firestore()
             .collection('chats')
             .doc(chatroomId)
