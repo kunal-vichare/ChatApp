@@ -6,10 +6,14 @@ import { useNavigation } from '@react-navigation/native'
 import { useSelector } from 'react-redux'
 import { getOrCreateChatroom } from '../../../database/firestoreCRUD'
 import VectorIcon from '../../../utils/VectorIcons'
+import {getStatusIcon} from '../../../utils/GetStatusIcon'
 
 const FlatlistRender = ({ item }) => {
+    // console.log("Item: ",item);
+
     const navigation = useNavigation();
     const myUid = useSelector(state => state.auth.user.uid);
+    const isMyLastMessage = item.lastMessageSenderId === myUid;
     // console.log("item are: ",item);
 
 
@@ -29,7 +33,7 @@ const FlatlistRender = ({ item }) => {
             <View style={styles.leftContainer}>
                 <View>
                     <Image source={{ uri: item.profileImage }} style={styles.image} />
-                    { item.isOnline &&
+                    {item.isOnline &&
                         <VectorIcon
                             type="Octicons"
                             name="dot-fill"
@@ -41,7 +45,28 @@ const FlatlistRender = ({ item }) => {
                 </View>
                 <View style={styles.msgContainer}>
                     <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.message} ellipsizeMode='tail' numberOfLines={2}>{item.lastMessage}</Text>
+                    <View style={styles.statusIcon}>
+                    {(item.typing?.[item.id] === true) ?
+                        <Text
+                            style={[styles.message, { color: 'green', fontWeight: fontWeight.bold }]} ellipsizeMode='tail'
+                            numberOfLines={2}
+                        >
+                            Typing...
+                        </Text>
+                        :
+                        <Text
+                            style={styles.message} ellipsizeMode='tail'
+                            numberOfLines={2}
+                        >
+                            {item.lastMessage}
+                        </Text>}
+                        {
+                            isMyLastMessage&&
+                            <View>
+                                {getStatusIcon(item.lastMessageStatus)}
+                            </View>
+                        }
+                        </View>
                 </View>
             </View>
             <View style={styles.rightContainer}>
@@ -121,6 +146,11 @@ const styles = StyleSheet.create({
         bottom: 0,
         right: 10,
 
+    },
+    statusIcon:{
+        flexDirection:'row',
+        gap:5,
+        alignItems:'flex-end'
     }
 })
 

@@ -178,28 +178,37 @@ const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId}) =>
     }, [chatroomId, myUid]);
 
 
-    //delievery status
-    const updateMessageStatus = async (msgs) => {
-        const batch = firestore().batch();
+const updateMessageStatus = async (msgs) => {
+    const batch = firestore().batch();
+    let hasUpdates = false;
 
-        msgs.forEach(msg => {
-            // Only update messages sent by OTHER user, not mine
-            if (msg.senderId === myUid) return;
+    msgs.forEach(msg => {
+        if (msg.senderId === myUid) return;
 
-            if (msg.status === 'sent' || msg.status === 'delivered') {
-                const msgRef = firestore()
-                    .collection('chats')
-                    .doc(chatroomId)
-                    .collection('messages')
-                    .doc(msg.id);
+        if (msg.status === 'sent' || msg.status === 'delivered') {
+            const msgRef = firestore()
+                .collection('chats')
+                .doc(chatroomId)
+                .collection('messages')
+                .doc(msg.id);
 
-                // Receiver got the message → delivered
-                batch.update(msgRef, { status: 'read' });
-            }
-        });
+            batch.update(msgRef, { status: 'read' });
+            hasUpdates = true;
+        }
+    });
 
-        await batch.commit();
-    };
+    if (!hasUpdates) return;
+
+    await batch.commit();
+
+    const lastMsg = msgs[0];
+    if (lastMsg?.senderId !== myUid) {
+        await firestore()
+            .collection('chats')
+            .doc(chatroomId)
+            .update({ lastMessageStatus: 'read' });
+    }
+};
 
     const handleRetry = async (failedMsg) => {
     setRetrying(true);

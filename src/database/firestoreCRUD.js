@@ -1,5 +1,5 @@
 import firestore from '@react-native-firebase/firestore';
-
+import { useSelector } from 'react-redux';
 export const addUserData = async (user) => {
     try {
         await firestore().collection('users').doc(user.uid).set({
@@ -74,12 +74,14 @@ export const sendMessage = async (chatroomId, text, senderId, senderName, receiv
 
         await firestore().collection('chats').doc(chatroomId).update({
             lastMessage: text,
+            lastMessageStatus:'sent',
+            lastMessageSenderId: senderId,
             updatedAt: Date.now(),
             [`unreadCount.${receiverId}`]: firestore.FieldValue.increment(1)
         });
     } catch (error) {
         console.log('sendMessage error', error);
-        throw error;
+        // throw error;
     }
 };
 

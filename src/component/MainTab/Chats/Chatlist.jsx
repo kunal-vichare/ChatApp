@@ -29,6 +29,8 @@ const Chatlist = ({ search }) => {
 
                 snapshot.docs.forEach(chatDoc => {
                     const data = chatDoc.data();
+                    console.log("data: ",data);
+                    
                     const chatId = chatDoc.id;
                     const otherUid = data.participants.find(uid => uid !== myUid);
 
@@ -38,7 +40,7 @@ const Chatlist = ({ search }) => {
                         .doc(otherUid)
                         .onSnapshot(userDoc => {
                             const userData = userDoc.data();
-
+                            console.log("userData: ",userData);
                             // Update only this specific chat in state
                             setChatList(prev => {
                                 const existingIndex = prev.findIndex(
@@ -53,6 +55,9 @@ const Chatlist = ({ search }) => {
                                     lastSeen: userData?.lastSeen,
                                     isOnline: userData?.isOnline,
                                     lastMessage: data?.lastMessage,
+                                    lastMessageStatus:data?.lastMessageStatus,      
+                                    lastMessageSenderId:data?.lastMessageSenderId,
+                                    typing:data?.typing,
                                     updatedAt: formatTimestamp(data?.updatedAt),
                                     unreadCount:  data?.unreadCount?.[myUid] || 0,
                                 };
