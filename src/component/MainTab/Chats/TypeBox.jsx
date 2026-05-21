@@ -108,7 +108,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRe
       await updateTypingStatus(false);
     } catch (error) {
       console.log(error);
-      onFail?.(msgText,msgText);
+      onFail?.(tempId,msgText);
     } finally {
       setIsSending(false);
     } 
