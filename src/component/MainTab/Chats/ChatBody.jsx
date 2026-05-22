@@ -441,6 +441,7 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.highlight,
     },
     typingContainer: {
+        alignItems:'center',
         paddingHorizontal: 14,
         paddingVertical: 6,
     },
