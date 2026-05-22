@@ -12,7 +12,6 @@ const AllUser = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [allUserSearch, setAllUserSearch] = useState("");
-  console.log("allUserSearch: ", allUserSearch);
 
   const myUid = useSelector(state => state.auth.user.uid);
 

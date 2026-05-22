@@ -9,12 +9,10 @@ import VectorIcon from '../../../utils/VectorIcons'
 import {getStatusIcon} from '../../../utils/GetStatusIcon'
 
 const FlatlistRender = ({ item }) => {
-    // console.log("Item: ",item);
 
     const navigation = useNavigation();
     const myUid = useSelector(state => state.auth.user.uid);
     const isMyLastMessage = item.lastMessageSenderId === myUid;
-    // console.log("item are: ",item);
 
 
     const handlePress = async () => {

@@ -1,5 +1,4 @@
 import firestore from '@react-native-firebase/firestore';
-import { useSelector } from 'react-redux';
 export const addUserData = async (user) => {
     try {
         await firestore().collection('users').doc(user.uid).set({
@@ -223,4 +222,40 @@ export const getOtherUserName = async (chatroomId, myUid) => {
         .get();
 
     return userDoc.data()?.name || 'Other';
+};
+
+export const addReaction = async (chatroomId, messageId, emoji, myUid) => {
+    const msgRef = firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .collection('messages')
+        .doc(messageId);
+
+    const msgDoc = await msgRef.get();
+    
+    const reactions = msgDoc.data()?.reactions || {};
+
+    // Each emoji holds an array of uids who reacted with it
+    const currentUsers = reactions[emoji] || [];
+    const alreadyReacted = currentUsers.includes(myUid);
+
+    if (alreadyReacted) {
+        // Toggle off — remove uid from that emoji's array
+        const updated = currentUsers.filter(uid => uid !== myUid);
+        if (updated.length === 0) {
+            // Remove emoji key entirely if no users left
+            await msgRef.update({
+                [`reactions.${emoji}`]: firestore.FieldValue.delete()
+            });
+        } else {
+            await msgRef.update({
+                [`reactions.${emoji}`]: updated
+            });
+        }
+    } else {
+        // Add uid to emoji's array
+        await msgRef.update({
+            [`reactions.${emoji}`]: firestore.FieldValue.arrayUnion(myUid)
+        });
+    }
 };

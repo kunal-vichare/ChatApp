@@ -9,7 +9,6 @@ import {formatWhatsAppLastSeen} from '../../../utils/GetTime'
 const ChatHeader = ({ userId }) => {
     const navigation = useNavigation();
     const [userData, setUserData] = useState(null);  
-    console.log("userData: ",userData);
 
     useEffect(() => {
     if (!userId) return;

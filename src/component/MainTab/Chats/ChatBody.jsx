@@ -1,15 +1,15 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
-import { colors, fontWeight } from '../../../constant';
+import { colors, fontFamily, fontSize, fontWeight } from '../../../constant';
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 import { formatTimestamp } from '../../../utils/GetTime';
 import { Loader } from '../../../component/MainTab/Chats';
 import { getChatDaySeparator } from '../../../utils/GetTime'
 import { getStatusIcon } from '../../../utils/GetStatusIcon';
-import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus } from '../../../database/firestoreCRUD';
-import { FailedMessage } from '../../../component/MainTab/Chats';
+import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus, addReaction } from '../../../database/firestoreCRUD';
+import { FailedMessage, ReactionDisplay, ReactionPicker } from '../../../component/MainTab/Chats';
 
 const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages }) => {
     const [loading, setLoading] = useState(false);
@@ -21,6 +21,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     const [retrying, setRetrying] = useState(false);
     const [otherUserName, setOtherUserName] = useState('');
     const [otherUserTyping, setOtherUserTyping] = useState(false);
+    const [reactionTarget, setReactionTarget] = useState(null);
 
     const myUid = useSelector(state => state.auth.user.uid);
     const myName = useSelector((state) => state.auth.user.name);
@@ -52,6 +53,16 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
             </Text>
         </View>
     );
+
+    //handle Reaction
+    const handleReaction = async (emoji) => {
+        if (!reactionTarget) return;
+        try {
+            await addReaction(chatroomId, reactionTarget, emoji, myUid);
+        } catch (error) {
+            console.log('reaction error:', error);
+        }
+    };
 
     // Fetch more (pagination)
     const handleFetchMore = async () => {
@@ -125,41 +136,71 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         }
     };
 
-    const UserMessageView = ({ message, time, isFirst, isLast, isMiddle, status }) => (
+    const UserMessageView = ({ message, time, isFirst, isLast, isMiddle, status, reactions, messageId }) => (
         <View style={styles.userContainer}>
-            <View style={styles.userInnerContainer}>
-                {isFirst && (
-                    <Text style={styles.sender}>You</Text>
-                )}
-                <Text style={styles.message}>{message}</Text>
-                <View style={styles.metaContainer}>
-                    <Text style={styles.time}>{status !== 'pending' ? time : null}</Text>
-                    <View style={styles.statusIcon}>
-                        {getStatusIcon(status)}
+            <View style={styles.userBubbleWrapper}>
+                <TouchableOpacity
+                    onLongPress={() => setReactionTarget(messageId)}
+                    activeOpacity={0.8}
+                    style={styles.btn}
+                >
+                    <View style={styles.userInnerContainer}>
+                        {isFirst && (
+                            <Text style={styles.sender}>You</Text>
+                        )}
+                        <Text style={styles.message}>{message}</Text>
+                        <View style={styles.metaContainer}>
+                            <Text style={styles.time}>{status !== 'pending' ? time : null}</Text>
+                            <View style={styles.statusIcon}>
+                                {getStatusIcon(status)}
+                            </View>
+                        </View>
                     </View>
-                </View>
+                </TouchableOpacity>
+                <ReactionDisplay
+                    reactions={reactions}
+                    myUid={myUid}
+                    onPress={(emoji) => {
+                        setReactionTarget(messageId);
+                        handleReaction(emoji);
+                    }}
+                />
             </View>
         </View>
     );
 
-    const OtherUserMessageView = ({ message, time, senderName, isFirst, isLast, isMiddle }) => (
+    const OtherUserMessageView = ({ message, time, senderName, isFirst, isLast, isMiddle, reactions, messageId }) => (
         <View style={styles.otherUserContainer}>
-            <View style={styles.otherUserInnerContainer}>
-                {
-                    isFirst &&
-                    <Text style={styles.receiver}>{senderName}</Text>
-                }
-                <Text style={styles.message}>{message}</Text>
-                <View style={styles.metaContainer}>
-                    <Text style={styles.time}>{time}</Text>
-                </View>
+            <View style={styles.otherInnerView}>
+                <TouchableOpacity
+                    onLongPress={() => setReactionTarget(messageId)}
+                    activeOpacity={0.8}
+                    style={styles.btn}
+                >
+                    <View style={styles.otherUserInnerContainer}>
+                        {
+                            isFirst &&
+                            <Text style={styles.receiver}>{senderName}</Text>
+                        }
+                        <Text style={styles.message}>{message}</Text>
+                        <View style={styles.metaContainer}>
+                            <Text style={styles.time}>{time}</Text>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+                    <ReactionDisplay
+                    reactions={reactions}
+                    myUid={myUid}
+                    onPress={(emoji) => {
+                        setReactionTarget(messageId);
+                        handleReaction(emoji);
+                    }}
+                />
             </View>
         </View>
     );
 
     const renderItem = ({ item, index }) => {
-        // console.log("item: ",item);
-
         const time = formatTimestamp(item.timestamp);
         const { isFirst, isLast, isMiddle } = getGroupFlags(index);
 
@@ -178,6 +219,8 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                             isLast={isLast}
                             isMiddle={isMiddle}
                             status={item.status}
+                            reactions={item.reactions || {}}
+                            messageId={item.id}
                         />
                     ) : (
                         <OtherUserMessageView
@@ -187,6 +230,8 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                             isFirst={isFirst}
                             isLast={isLast}
                             isMiddle={isMiddle}
+                            reactions={item.reactions || {}}
+                            messageId={item.id}
                         />
                     )
                 }
@@ -209,9 +254,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                         renderItem={renderItem}
                         keyExtractor={(item) => item.id}
                         showsVerticalScrollIndicator={false}
-                        contentContainerStyle={{
-                            paddingVertical: 10,
-                        }}
+                        contentContainerStyle={styles.flatlistContent}
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
                                 <Text style={styles.emptyText}>
@@ -239,7 +282,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                                     <ActivityIndicator size="small" color={colors.secondary} />
                                     <Text style={styles.loadingMoreText}>Loading older messages...</Text>
                                 </View>
-                            ) : !hasMore && messages.length > 0 ? (
+                            ) : !hasMore && allMessages.length > 0 ? (
                                 <View style={styles.noMoreContainer}>
                                     <Text style={styles.noMoreText}>No more messages</Text>
                                 </View>
@@ -281,151 +324,188 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                     />
                 </TouchableOpacity>
             }
+            <ReactionPicker
+                visible={reactionTarget !== null}
+                onSelect={handleReaction}
+                onClose={() => setReactionTarget(null)}
+            />
         </View>
+
     );
 };
 
 const styles = StyleSheet.create({
+
+    flatlistContent: {
+        paddingVertical: 10,
+        paddingHorizontal: 4,
+    },
+
     userContainer: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        marginVertical: 5,
+        marginVertical: 2,
         paddingHorizontal: 10,
+    },
+    userBubbleWrapper: {
+        alignItems: 'flex-end',
+        maxWidth: '80%',
+    },
+    userInnerContainer: {
+        backgroundColor: '#DCF8C6',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 18,
+        borderTopRightRadius: 4,
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 1,
     },
 
     otherUserContainer: {
         flexDirection: 'row',
-        marginVertical: 5,
+        marginVertical: 2,
         paddingHorizontal: 10,
     },
-
-    userInnerContainer: {
-        backgroundColor: colors.userMsg,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderTopLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        borderBottomLeftRadius: 30,
-        // flexDirection: 'row',
-        // alignItems: 'flex-end',
+    otherBubbleWrapper: {
+        alignItems: 'flex-start',
         maxWidth: '80%',
-        // gap: 3
     },
-
     otherUserInnerContainer: {
-        backgroundColor: colors.primary,
+        backgroundColor: '#FFFFFF',
         paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderTopRightRadius: 30,
-        borderBottomRightRadius: 30,
-        borderBottomLeftRadius: 30,
-        maxWidth: '80%',
-        gap: 3
+        paddingHorizontal: 12,
+        borderRadius: 18,
+        borderTopLeftRadius: 4,
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 1,
+        gap: 2,
     },
-
     message: {
-        fontSize: 14,
-        color: '#000',
+        fontSize: fontSize.base,
+        color: '#111',
         fontWeight: fontWeight.medium,
         lineHeight: 20,
         flexShrink: 1,
+        fontFamily: fontFamily.popinsRegular,
     },
     metaContainer: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
         alignItems: 'center',
-        alignSelf: 'flex-end',
-        marginTop: 4,
-    },
-
-    userTextContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-evenly',
-    },
-    otherTextContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-evenly'
+        marginTop: 3,
+        gap: 3,
     },
     time: {
         fontSize: 10,
-        color: 'grey',
-        fontWeight: fontWeight.highlight,
+        color: '#7a7a7a',
+        fontFamily: fontFamily.popinsRegular,
     },
     statusIcon: {
-        marginLeft: 4,
         justifyContent: 'center',
     },
-
+    sender: {
+        fontSize: fontSize.sm,
+        color: '#1a73e8',
+        fontWeight: fontWeight.bold,
+        fontFamily: fontFamily.popinsBold,
+        marginBottom: 2,
+    },
+    receiver: {
+        fontSize: fontSize.sm,
+        color: '#e53935',
+        fontWeight: fontWeight.bold,
+        fontFamily: fontFamily.popinsBold,
+        marginBottom: 2,
+    },
+    dateSeparatorContainer: {
+        flexDirection: 'row',
+        alignSelf: 'center',
+        marginVertical: 12,
+        paddingHorizontal: 16,
+        gap: 8,
+    },
+    dateText: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+        backgroundColor: '#E9EDF0',
+        color: '#6B7C85',
+        fontSize: fontSize.xs,
+        fontFamily: fontFamily.popinsBold,
+        fontWeight: fontWeight.highlight,
+    },
+    typingContainer: {
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+    },
+    typingText: {
+        fontSize: fontSize.sm,
+        color: '#17860b',
+        fontWeight: fontWeight.bold,
+        fontFamily: fontFamily.popinsBold,
+    },
     scrollDownArrow: {
         position: 'absolute',
-        backgroundColor: colors.primary,
-        borderRadius: 50,
-        height: 30,
-        width: 30,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        height: 36,
+        width: 36,
         alignItems: 'center',
         justifyContent: 'center',
-        bottom: 20,
-        right: 20,
-        opacity: 0.5
+        bottom: 16,
+        right: 16,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
     },
     emptyContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#c4c5bc',
-        marginHorizontal: 40,
-        borderRadius: 15,
-        padding: 10
+        gap: 8,
+        backgroundColor: '#DDE8C9',
+        marginHorizontal: 30,
+        borderRadius: 12,
+        padding: 12,
     },
     emptyText: {
-        textAlign: 'center'
+        flex: 1,
+        textAlign: 'center',
+        fontSize: fontSize.sm,
+        color: '#555',
+        lineHeight: 18,
+        fontFamily: fontFamily.popinsRegular,
     },
-    sender: {
-        color: 'blue',
-        fontWeight: fontWeight.highlight,
-    },
-    receiver: {
-        color: 'red',
-        fontWeight: fontWeight.highlight,
-    },
-    dateSeparatorContainer: {
+    loadingMore: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    dateText: {
-        marginHorizontal: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-        borderRadius: 15,
-        backgroundColor: '#F2F4F5',
-        color: '#6B7C85',
-        fontSize: 12,
-    },
-    typingContainer: {
-        alignItems: 'center'
-    },
-    typingText: {
-        color: '#17860b',
-        fontWeight: fontWeight.bold
-    },
-    loadingMore: {
-        alignItems: 'center',
         paddingVertical: 12,
-        gap: 6,
+        gap: 8,
     },
     loadingMoreText: {
-        fontSize: 12,
+        fontSize: fontSize.sm,
         color: colors.textGrey,
+        fontFamily: fontFamily.popinsRegular,
     },
     noMoreContainer: {
-        alignItems: 'center',
+        flexDirection: 'row',
+        alignSelf: 'center',
         paddingVertical: 12,
+        paddingHorizontal: 20,
+        gap: 8,
     },
     noMoreText: {
-        fontSize: 12,
+        fontSize: fontSize.sm,
         color: colors.textGrey,
+        fontFamily: fontFamily.popinsRegular,
     },
 });
 
