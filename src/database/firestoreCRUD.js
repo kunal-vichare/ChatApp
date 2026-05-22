@@ -59,7 +59,7 @@ export const getOrCreateChatroom = async (myUid, otherUid) => {
 
 export const sendMessage = async (chatroomId, text, senderId, senderName, receiverId) => {
     try {
-        throw new error(Simulatederror);
+        // throw new Error(Simulatederror);
         await firestore()
             .collection('chats')
             .doc(chatroomId)
@@ -81,7 +81,7 @@ export const sendMessage = async (chatroomId, text, senderId, senderName, receiv
         });
     } catch (error) {
         console.log('sendMessage error', error);
-        // throw error;
+        throw error;
     }
 };
 
@@ -120,7 +120,33 @@ export const markAllDelivered = async (myUid) => {
     }
 };
 
-export const getBatchData = async (chatroomId,lastDoc,PAGE_SIZE) => {
+// Subscribe to latest messages (realtime, paginated)
+export const subscribeToMessages = (chatroomId, PAGE_SIZE, onUpdate, onError) => {
+    return firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .collection('messages')
+        .orderBy('timestamp', 'desc')
+        .limit(PAGE_SIZE)
+        .onSnapshot(snapshot => {
+            if (snapshot.empty) {
+                onUpdate({ msgs: [], lastDoc: null, hasMore: false });
+                return;
+            }
+            const msgs = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            onUpdate({
+                msgs,
+                lastDoc: snapshot.docs[snapshot.docs.length - 1],
+                hasMore: snapshot.docs.length === PAGE_SIZE,
+            });
+        }, onError);
+};
+
+// Fetch older messages (pagination)
+export const fetchMoreMessages = async (chatroomId, lastDoc, PAGE_SIZE) => {
     const snapshot = await firestore()
         .collection('chats')
         .doc(chatroomId)
@@ -129,5 +155,72 @@ export const getBatchData = async (chatroomId,lastDoc,PAGE_SIZE) => {
         .startAfter(lastDoc)
         .limit(PAGE_SIZE)
         .get();
-    return snapshot;
-}
+
+    return {
+        msgs: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        newLastDoc: snapshot.docs[snapshot.docs.length - 1],
+        hasMore: snapshot.docs.length === PAGE_SIZE,
+    };
+};
+
+// Batch update messages to 'read' status
+export const updateMessageStatus = async (chatroomId, msgs, myUid) => {
+    const batch = firestore().batch();
+    let hasUpdates = false;
+
+    msgs.forEach(msg => {
+        if (msg.senderId === myUid) return;
+        if (msg.status === 'sent' || msg.status === 'delivered') {
+            const msgRef = firestore()
+                .collection('chats')
+                .doc(chatroomId)
+                .collection('messages')
+                .doc(msg.id);
+            batch.update(msgRef, { status: 'read' });
+            hasUpdates = true;
+        }
+    });
+
+    if (!hasUpdates) return;
+
+    await batch.commit();
+
+    const lastMsg = msgs[0];
+    if (lastMsg?.senderId !== myUid) {
+        await firestore()
+            .collection('chats')
+            .doc(chatroomId)
+            .update({ lastMessageStatus: 'read' });
+    }
+};
+
+// Subscribe to typing indicator
+export const subscribeToTyping = (chatroomId, myUid, onUpdate) => {
+    return firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .onSnapshot(snapshot => {
+            const data = snapshot.data();
+            const typing = data?.typing || {};
+            const otherUid = data?.participants?.find(uid => uid !== myUid);
+            onUpdate(typing[otherUid] === true);
+        });
+};
+
+// Get other participant's name
+export const getOtherUserName = async (chatroomId, myUid) => {
+    const chatDoc = await firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .get();
+
+    const otherUid = chatDoc.data()?.participants?.find(uid => uid !== myUid);
+    if (!otherUid) return 'Other';
+
+    const userDoc = await firestore()
+        .collection('users')
+        .doc(otherUid)
+        .get();
+
+    return userDoc.data()?.name || 'Other';
+};

@@ -8,10 +8,10 @@ import { formatTimestamp } from '../../../utils/GetTime';
 import { Loader } from '../../../component/MainTab/Chats';
 import { getChatDaySeparator } from '../../../utils/GetTime'
 import { getStatusIcon } from '../../../utils/GetStatusIcon';
-import {sendMessage} from '../../../database/firestoreCRUD'
-import {FailedMessage} from '../../../component/MainTab/Chats'
+import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus } from '../../../database/firestoreCRUD';
+import { FailedMessage } from '../../../component/MainTab/Chats';
 
-const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId,localMessages}) => {
+const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [lastDoc, setLastDoc] = useState(null);
@@ -23,9 +23,9 @@ const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId,loca
     const [otherUserTyping, setOtherUserTyping] = useState(false);
 
     const myUid = useSelector(state => state.auth.user.uid);
-    const myName = useSelector((state)=>state.auth.user.name);
-    
-    const allMessages = [...localMessages,...messages];
+    const myName = useSelector((state) => state.auth.user.name);
+
+    const allMessages = [...localMessages, ...messages];
     const flatListRef = useRef(null);
     const PAGE_SIZE = 10;
 
@@ -53,41 +53,16 @@ const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId,loca
         </View>
     );
 
-    const fetchMoreMessages = async () => {
-        // Stop if already loading or no more data
+    // Fetch more (pagination)
+    const handleFetchMore = async () => {
         if (loadingMore || !hasMore || !lastDoc) return;
-
         setLoadingMore(true);
         try {
-            const snapshot = await firestore()
-                .collection('chats')
-                .doc(chatroomId)
-                .collection('messages')
-                .orderBy('timestamp', 'desc')
-                .startAfter(lastDoc)
-                .limit(PAGE_SIZE)
-                .get();
-
-            if (snapshot.empty) {
-                setHasMore(false);
-                return;
-            }
-
-            const olderMsgs = snapshot.docs?.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
-
-            // Append older messages AFTER existing ones
-            // (inverted list shows newest at bottom)
-            setMessages(prev => [...prev, ...olderMsgs]);
-
-            // Update cursor to last fetched doc
-            setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-
-            // If fetched less than PAGE_SIZE, no more data
-            setHasMore(snapshot.docs.length === PAGE_SIZE);
-
+            const { msgs, newLastDoc, hasMore: more } = await fetchMoreMessages(chatroomId, lastDoc, PAGE_SIZE);
+            if (msgs.length === 0) { setHasMore(false); return; }
+            setMessages(prev => [...prev, ...msgs]);
+            setLastDoc(newLastDoc);
+            setHasMore(more);
         } catch (error) {
             console.log('fetchMore error:', error);
         } finally {
@@ -95,143 +70,60 @@ const ChatBody = ({ chatroomId,failedMessages,setFailedMessages,otherUserId,loca
         }
     };
 
+    // Messages listener
     useEffect(() => {
         setLoading(true);
-        const unsubscribe = firestore()
-            .collection('chats')
-            .doc(chatroomId)
-            .collection('messages')
-            .orderBy('timestamp', 'desc')
-            .limit(PAGE_SIZE)
-            .onSnapshot(snapshot => {
-                if (snapshot.empty) {
-                    setLoading(false);
-                    return;
-                }
-                const msgs = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
-
+        const unsubscribe = subscribeToMessages(
+            chatroomId,
+            PAGE_SIZE,
+            ({ msgs, lastDoc: newLastDoc, hasMore: newHasMore }) => {
                 setMessages(msgs);
-                setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-                setHasMore(snapshot.docs.length === PAGE_SIZE);
-                updateMessageStatus(msgs);
+                setLastDoc(newLastDoc);
+                setHasMore(newHasMore);
+                updateMessageStatus(chatroomId, msgs, myUid);
                 setLoading(false);
             },
-                error => {
-                    console.log(error);
-                    setLoading(false);
-                });
-
+            (error) => {
+                console.log(error);
+                setLoading(false);
+            }
+        );
         return () => unsubscribe();
     }, [chatroomId]);
 
+    // Other user's name
     useEffect(() => {
-        const getOtherUser = async () => {
-            const chatDoc = await firestore()
-                .collection('chats')
-                .doc(chatroomId)
-                .get();
-
-            const otherUid = chatDoc
-                .data()
-                ?.participants?.find(
-                    uid => uid !== myUid
-                );
-
-            if (otherUid) {
-                const userDoc = await firestore()
-                    .collection('users')
-                    .doc(otherUid)
-                    .get();
-
-                setOtherUserName(
-                    userDoc.data()?.name || 'Other'
-                );
-            }
-        };
-
-        getOtherUser();
+        getOtherUserName(chatroomId, myUid).then(setOtherUserName);
     }, [chatroomId, myUid]);
 
-    //typing...
+    // Typing indicator
     useEffect(() => {
-        const unsubscribe = firestore()
-            .collection('chats')
-            .doc(chatroomId)
-            .onSnapshot(snapshot => {
-                const data = snapshot.data();
-                const typing = data?.typing || {};
-
-                const otherUid =
-                    data?.participants?.find(
-                        uid => uid !== myUid
-                    );
-
-                setOtherUserTyping(
-                    typing[otherUid] === true
-                );
-            });
-
+        const unsubscribe = subscribeToTyping(chatroomId, myUid, setOtherUserTyping);
         return () => unsubscribe();
     }, [chatroomId, myUid]);
 
-
-const updateMessageStatus = async (msgs) => {
-    const batch = firestore().batch();
-    let hasUpdates = false;
-
-    msgs.forEach(msg => {
-        if (msg.senderId === myUid) return;
-
-        if (msg.status === 'sent' || msg.status === 'delivered') {
-            const msgRef = firestore()
-                .collection('chats')
-                .doc(chatroomId)
-                .collection('messages')
-                .doc(msg.id);            
-            batch.update(msgRef, { status: 'read' });
-            hasUpdates = true;
-        }
-    });
-
-    if (!hasUpdates) return;
-
-    await batch.commit();
-
-    const lastMsg = msgs[0];
-    if (lastMsg?.senderId !== myUid) {
-        await firestore()
-            .collection('chats')
-            .doc(chatroomId)
-            .update({ lastMessageStatus: 'read' });
-    }
-};
-
     const handleRetry = async (failedMsg) => {
-    setRetrying(true);
-    try {
-        await sendMessage(
-            chatroomId,
-            failedMsg.text,
-            myUid,
-            myName,
-            otherUserId
-        );
+        setRetrying(true);
+        try {
+            await sendMessage(
+                chatroomId,
+                failedMsg.text,
+                myUid,
+                myName,
+                otherUserId
+            );
 
-        // Success — remove from failed list
-        setFailedMessages(prev =>
-            prev.filter(m => m.id !== failedMsg.id)
-        );
+            // Success — remove from failed list
+            setFailedMessages(prev =>
+                prev.filter(m => m.id !== failedMsg.id)
+            );
 
-    } catch (error) {
-        // Still failed — keep in list
-        console.log('retry failed:', error);
-    } finally {
-        setRetrying(false);
-    }
-};
+        } catch (error) {
+            console.log('retry failed:', error);
+        } finally {
+            setRetrying(false);
+        }
+    };
 
     const UserMessageView = ({ message, time, isFirst, isLast, isMiddle, status }) => (
         <View style={styles.userContainer}>
@@ -241,7 +133,7 @@ const updateMessageStatus = async (msgs) => {
                 )}
                 <Text style={styles.message}>{message}</Text>
                 <View style={styles.metaContainer}>
-                    <Text style={styles.time}>{status!=='pending' ? time : null}</Text>
+                    <Text style={styles.time}>{status !== 'pending' ? time : null}</Text>
                     <View style={styles.statusIcon}>
                         {getStatusIcon(status)}
                     </View>
@@ -267,7 +159,7 @@ const updateMessageStatus = async (msgs) => {
 
     const renderItem = ({ item, index }) => {
         // console.log("item: ",item);
-        
+
         const time = formatTimestamp(item.timestamp);
         const { isFirst, isLast, isMiddle } = getGroupFlags(index);
 
@@ -298,7 +190,7 @@ const updateMessageStatus = async (msgs) => {
                         />
                     )
                 }
-                {(separatorLabel && item.status!=='pending') ? 
+                {(separatorLabel && item.status !== 'pending') ?
                     <DateSeparator label={separatorLabel} /> : null
                 }
             </>
@@ -334,7 +226,7 @@ const updateMessageStatus = async (msgs) => {
                             </View>
                         }
                         inverted
-                        onEndReached={fetchMoreMessages}
+                        onEndReached={handleFetchMore}
                         onEndReachedThreshold={0.2}
                         onScroll={(event) => {
                             const offsetY = event.nativeEvent.contentOffset.y;
@@ -356,20 +248,20 @@ const updateMessageStatus = async (msgs) => {
                     />
 
             }
-              {failedMessages.map(msg => (
-            <FailedMessage
-                key={msg.id}
-                msg={msg}
-                onRetry={handleRetry}
-                //remove from list if dismiss
-                onDismiss={() => {
-                    setFailedMessages(prev =>
-                        prev.filter(m => m.id !== msg.id)
-                    );
-                }}
-                retrying={retrying}
-            />
-        ))}
+            {failedMessages.map(msg => (
+                <FailedMessage
+                    key={msg.id}
+                    msg={msg}
+                    onRetry={handleRetry}
+                    //remove from list if dismiss
+                    onDismiss={() => {
+                        setFailedMessages(prev =>
+                            prev.filter(m => m.id !== msg.id)
+                        );
+                    }}
+                    retrying={retrying}
+                />
+            ))}
             {otherUserTyping && (
                 <View style={styles.typingContainer}>
                     <Text style={styles.typingText}>{`${otherUserName} is typing...`}</Text>
