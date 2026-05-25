@@ -1,8 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
 import { colors, fontFamily, fontSize, fontWeight } from '../../../constant';
-import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 import { formatTimestamp } from '../../../utils/GetTime';
 import { Loader } from '../../../component/MainTab/Chats';
@@ -141,7 +140,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         }
     };
 
-    const UserMessageView = ({ message, time, isFirst, status, reactions, messageId, replyTo, urlPreview }) => (
+    const UserMessageView = memo(({ message, time, isFirst, status, reactions, messageId, replyTo, urlPreview }) => (
         <View style={styles.userContainer}>
             <View style={styles.userBubbleWrapper}>
                 <TouchableOpacity
@@ -198,9 +197,9 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                 />
             </View>
         </View>
-    );
+    ));
 
-    const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, messageId, replyTo, urlPreview }) => (
+    const OtherUserMessageView = memo(({ message, time, senderName, isFirst, reactions, messageId, replyTo, urlPreview }) => (
         <View style={styles.otherUserContainer}>
             <View style={styles.otherBubbleWrapper}>
                 <TouchableOpacity
@@ -253,7 +252,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                 />
             </View>
         </View>
-    );
+    ));
 
     const renderItem = ({ item, index }) => {
         const time = formatTimestamp(item.timestamp);

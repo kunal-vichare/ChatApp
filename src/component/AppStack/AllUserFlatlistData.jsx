@@ -3,11 +3,18 @@ import React from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { useSelector } from 'react-redux';
 import {getOrCreateChatroom} from '../../database/firestoreCRUD'
+import {Checkbox} from 'react-native-paper'
 
-const AllUserFlatlistData = ({ item }) => {
+const AllUserFlatlistData = ({ item,selectedIds,setSelectedIds,isSelectionMode, setIsSelectionMode }) => {
   const navigation = useNavigation();
   
     const myUid = useSelector(state=>state.auth.user.uid);
+
+      const toggleSelection = (id) => {
+        setSelectedIds(prev => 
+          prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+      };
   
       const handlePress = async () => {
       const chatroomId = await getOrCreateChatroom(myUid, item.uid);
@@ -30,7 +37,7 @@ const AllUserFlatlistData = ({ item }) => {
         style={styles.image}
       />
 
-      <View>
+      <View style={styles.textContainer}>
         <Text style={styles.name}>
           {item.name}
         </Text>
@@ -40,6 +47,19 @@ const AllUserFlatlistData = ({ item }) => {
         </Text>
       </View>
 
+      {
+        isSelectionMode && (
+        <Checkbox.Item
+          status={selectedIds.includes(item.name) ? 'checked' : 'unchecked'}
+          onPress={() => toggleSelection(item.name)}
+          position='trailing'
+          style={styles.checkbox}
+          color='green'
+          
+          // mode="android"
+        />
+        )
+      }
     </TouchableOpacity>
   )
 }
@@ -60,6 +80,9 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         marginRight: 12,
         resizeMode:'cover'
+    },
+    textContainer:{
+      flex:1
     },
     name: {
         fontSize: 18,

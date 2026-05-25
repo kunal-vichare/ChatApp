@@ -7,11 +7,14 @@ import { colors, fontFamily, fontSize, fontWeight } from '../../constant';
 import { useSelector } from 'react-redux';
 import { Loader, Searchbar } from '../../component/MainTab/Chats'
 import VectorIcon from '../../utils/VectorIcons';
+import { Divider } from 'react-native-paper';
 
 const AllUser = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [allUserSearch, setAllUserSearch] = useState("");
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const myUid = useSelector(state => state.auth.user.uid);
 
@@ -42,17 +45,20 @@ const AllUser = () => {
     return searchMatch;
   })
   return (
-    <View>
-      <AllUserHeader length={users.length} />
+    <View style={{flex:1}}>
+      <AllUserHeader length={users.length} isSelectionMode={isSelectionMode} setIsSelectionMode={setIsSelectionMode} setSelectedIds={setSelectedIds}/>
       <Searchbar
         value={allUserSearch}
         onSearch={setAllUserSearch}
         placeholder="Search for users"
       />
       {
-        !allUserSearch &&
+        (!isSelectionMode && !allUserSearch)?
         <View>
-          <TouchableOpacity style={styles.createBtn}>
+          <TouchableOpacity 
+            style={styles.createBtn}
+            onPress={()=>setIsSelectionMode(true)}
+          >
             <VectorIcon
               type="MaterialIcons"
               size={24}
@@ -83,18 +89,38 @@ const AllUser = () => {
             <Text style={styles.createText}>Create new community</Text>
           </TouchableOpacity>
         </View>
+        :
+        null
       }
       {
         loading ?
           <Loader />
           :
-          <View style={styles.container}>
+          <View style={styles.container}> 
+            {selectedIds && selectedIds.length > 0 && (
+              <View style={styles.selectedContainer}>
+                <Text style={styles.to}>To:</Text>
+                <View style={styles.badge}>
+                <Text style={styles.badgeText}>{selectedIds.length}</Text>
+                </View>
+                {selectedIds.map((item) => (
+                  <View key={item} style={styles.innerContainer}>
+                    <Text style={styles.selectedText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <Divider style={{marginVertical:10}}/>
+            {isSelectionMode?
+            <Text style={styles.text}>Select the contact</Text>
+            :
             <Text style={styles.text}>Contacts on Chat Mate</Text>
+            }
             <FlatList
               data={finalData}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <AllUserFlatlistData item={item} />
+                <AllUserFlatlistData item={item} selectedIds={selectedIds} setSelectedIds={setSelectedIds} isSelectionMode={isSelectionMode} setIsSelectionMode={setIsSelectionMode}/>
               )}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
@@ -103,6 +129,20 @@ const AllUser = () => {
                 </View>
               }
             />
+            {
+              isSelectionMode &&
+            <TouchableOpacity style={styles.createGrpBtn}>
+            <VectorIcon
+              type="MaterialIcons"
+              size={24}
+              name="group"
+              color={colors.primary}
+            />
+              <Text style={styles.createGrpText}>
+                Create group
+              </Text>
+            </TouchableOpacity>
+            }
           </View>
       }
     </View>
@@ -117,6 +157,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   container: {
+    flex:1,
     padding: 16
   },
   emptyContainer: {
@@ -145,6 +186,62 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 30,
   },
+  selectedContainer:{
+    backgroundColor:'#f7f7f7',
+    borderRadius:10,
+    padding:10,
+    gap:10,
+    flexDirection:'row'
+  },
+  innerContainer:{
+    backgroundColor:'#fff',
+    borderRadius:20,
+    paddingVertical:5,
+    paddingHorizontal:10,
+    borderWidth:1,
+    borderColor:'grey'
+  },
+  selectedText:{
+    fontWeight:fontWeight.bold,
+    color:colors.secondary,
+    fontSize:fontSize.base,
+    padding:5
+  },
+  to:{
+    fontWeight:fontWeight.exBold,
+    fontSize:fontSize.md
+  },
+  badge:{
+    position:'absolute',
+    top:5,
+    right:5,
+    backgroundColor:'yellow',
+    padding:5,
+    height:26,
+    width:26,
+    borderRadius:13,
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  badgeText:{
+    fontWeight:fontWeight.exBold
+  },
+  createGrpBtn:{
+    flexDirection:'row',
+    backgroundColor:colors.wp,
+    padding:15,
+    gap:10,
+    borderRadius:20,
+    maxWidth:'40%',
+    alignSelf:'flex-end',
+    alignItems:'center',
+    justifyContent:'center'
+  },
+  createGrpText:{
+    fontWeight:fontWeight.bold,
+    fontSize:fontSize.base,
+    color:colors.primary
+  }
 })
 
 export default AllUser

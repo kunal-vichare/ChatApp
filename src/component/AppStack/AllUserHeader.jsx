@@ -4,7 +4,7 @@ import {useNavigation} from '@react-navigation/native';
 import VectorIcon from '../../utils/VectorIcons';
 import { colors } from '../../constant';
 
-const AllUserHeader = ({length}) => {
+const AllUserHeader = ({length,setIsSelectionMode,isSelectionMode,setSelectedIds}) => {
   const navigation = useNavigation();
   return (
     <View style={styles.container}>
@@ -23,12 +23,24 @@ const AllUserHeader = ({length}) => {
       </View>
 
       <View style={styles.headerContainer}>
-        <VectorIcon
-          type="Entypo"
-          name="dots-three-vertical"
-          color={colors.white}
-          size={18}
-        />
+        {
+          isSelectionMode?
+          <VectorIcon
+            type="MaterialIcons"
+            name="cancel"
+            color={colors.white}
+            size={24}
+            onPress={()=>{setIsSelectionMode(false);setSelectedIds([])}}
+          />
+          :
+          <VectorIcon
+            type="Entypo"
+            name="dots-three-vertical"
+            color={colors.white}
+            size={18}
+          />
+          
+        }
       </View>
     </View>
   );
