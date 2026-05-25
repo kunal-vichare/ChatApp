@@ -8,7 +8,7 @@ import { sendMessage } from '../../../database/firestoreCRUD'
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 
-const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRemoveLocalMessage,onFail,replyTo,setReplyTo }) => {
+const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, onRemoveLocalMessage, onFail, replyTo, setReplyTo }) => {
   const [sendEnable, setSendEnable] = useState(false);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -30,10 +30,12 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRe
     }
   };
 
+  const urlMatch = message.match(/(https?:\/\/[^\s]+)/g);
+  const urlPreview = urlMatch ? urlMatch[0] : null;
+
   const handleTextChange = (text) => {
     setMessage(text);
     setSendEnable(text.trim().length > 0);
-
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const match = text.match(urlRegex);
     if (match && match[0]) {
@@ -41,13 +43,12 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRe
     } else {
       setPreviewUrl('');
     }
-
     updateTypingStatus(true);
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     typingTimeoutRef.current = setTimeout(() => {
       updateTypingStatus(false);
     }, 2000);
@@ -80,39 +81,39 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRe
     // !message.trim()) => removes spaces from start and end so handle sending empty spaces as message
     if (isSending || !message.trim()) return; //prevent duplicate tap
     const msgText = message;
-    const tempId  = `temp_${Date.now()}`;
-            const optimisticMsg = {
-            id:         tempId,
-            text:       msgText,
-            senderId:   myUid,
-            senderName: myName,
-            timestamp:  {
-                toDate:    () => new Date(),
-                toMillis:  () => Date.now(),
-            },
-            status:  'pending',
-            isLocal: true,
-        };
-        onAddLocalMessage(optimisticMsg);
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      text: msgText,
+      senderId: myUid,
+      senderName: myName,
+      timestamp: {
+        toDate: () => new Date(),
+        toMillis: () => Date.now(),
+      },
+      status: 'pending',
+      isLocal: true,
+    };
+    onAddLocalMessage(optimisticMsg);
     try {
       setIsSending(true);
-      await sendMessage(chatroomId, message, myUid, myName, otherUserId,replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null);
+      await sendMessage(chatroomId, message, myUid, myName, otherUserId, replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null, urlPreview);
       setReplyTo(null);
       onRemoveLocalMessage(tempId);
       setMessage('');
       setSendEnable(false);
       setPreviewUrl('');
-      
+
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       };
       await updateTypingStatus(false);
     } catch (error) {
       console.log(error);
-      onFail?.(tempId,msgText);
+      onFail?.(tempId, msgText);
     } finally {
       setIsSending(false);
-    } 
+    }
   };
 
   return (
@@ -164,11 +165,11 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRe
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={styles.sendButton} 
+        <TouchableOpacity
+          style={styles.sendButton}
           disabled={isSending}
-          onPress={sendEnable? handleSend : null}
-          >
+          onPress={sendEnable ? handleSend : null}
+        >
           {
             !sendEnable ? (
               <VectorIcon
@@ -188,8 +189,8 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRe
                 name="send"
                 size={25}
                 color={colors.primary}
-                // onPress={handleSend}
-                
+              // onPress={handleSend}
+
               />
             )
           }

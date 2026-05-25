@@ -56,7 +56,7 @@ export const getOrCreateChatroom = async (myUid, otherUid) => {
     return chatroomId;
 };
 
-export const sendMessage = async (chatroomId, text, senderId, senderName, receiverId, replyTo = null) => {
+export const sendMessage = async (chatroomId, text, senderId, senderName, receiverId, replyTo = null, urlPreview = null) => {
     try {
         // throw new Error(Simulatederror);
         await firestore()
@@ -76,6 +76,7 @@ export const sendMessage = async (chatroomId, text, senderId, senderName, receiv
                         senderName: replyTo.senderName,
                     }
                 }),
+                ...(urlPreview && { urlPreview }),
             });
 
         await firestore().collection('chats').doc(chatroomId).update({

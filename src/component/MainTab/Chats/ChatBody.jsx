@@ -10,6 +10,7 @@ import { getChatDaySeparator } from '../../../utils/GetTime'
 import { getStatusIcon } from '../../../utils/GetStatusIcon';
 import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus, addReaction } from '../../../database/firestoreCRUD';
 import { FailedMessage, ReactionDisplay, ReactionPicker, SwipeableMessage } from '../../../component/MainTab/Chats';
+import LinkPreview from 'react-native-preview-url';
 
 const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages, replyTo, setReplyTo }) => {
     const [loading, setLoading] = useState(false);
@@ -136,7 +137,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         }
     };
 
-    const UserMessageView = ({ message, time, isFirst, status, reactions, messageId, replyTo }) => (
+    const UserMessageView = ({ message, time, isFirst, status, reactions, messageId, replyTo, urlPreview }) => (
     <View style={styles.userContainer}>
         <View style={styles.userBubbleWrapper}>
             <TouchableOpacity
@@ -159,6 +160,21 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                             </View>
                         </View>
                     )}
+                      {urlPreview && (
+                        <LinkPreview
+                            url={urlPreview}
+                            timeout={3000}
+                            onError={(e) => console.log(e)}
+                            containerStyle={styles.linkPreviewContainer}
+                            imageStyle={styles.linkPreviewImage}
+                            textContainerStyle={styles.linkPreviewTextContainer}
+                            titleStyle={styles.linkPreviewTitle}
+                            descriptionStyle={styles.linkPreviewDesc}
+                            titleLines={1}
+                            descriptionLines={2}
+                        />
+                    )}
+
                     <Text style={styles.message}>{message}</Text>
                     <View style={styles.metaContainer}>
                         <Text style={styles.time}>{status !== 'pending' ? time : null}</Text>
@@ -195,7 +211,7 @@ const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, m
                     {replyTo && (
                         <View style={styles.quotedMessage}>
                             <View style={styles.quotedAccent} />
-                            <View>
+                            <View style={{ flex: 1 }}>
                                 <Text style={styles.quotedName}>{replyTo.senderName}</Text>
                                 <Text style={styles.quotedText} numberOfLines={1}>
                                     {replyTo.text}
@@ -250,6 +266,7 @@ const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, m
                             reactions={item.reactions || {}}
                             messageId={item.id}
                             replyTo={item.replyTo || null}
+                            urlPreview={item.urlPreview || null}
                         />
                     ) : (
                         <OtherUserMessageView
@@ -607,6 +624,35 @@ quotedText: {
     fontWeight:fontWeight.highlight,
     color: '#555',
     fontFamily: fontFamily.popinsRegular,
+},
+linkPreviewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    marginBottom: 6,
+    // overflow: 'hidden',
+    padding: 8,
+},
+linkPreviewImage: {
+    // height: '80%',
+    width: '30%',
+    borderRadius: 6,
+    resizeMode: 'cover',
+},
+linkPreviewTextContainer: {
+    flex: 1,
+    marginLeft: 8,
+    justifyContent: 'center',
+},
+linkPreviewTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: colors.secondary,
+},
+linkPreviewDesc: {
+    fontSize: 11,
+    color: '#666',
 },
 });
 
