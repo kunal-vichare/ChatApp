@@ -8,7 +8,7 @@ import { sendMessage } from '../../../database/firestoreCRUD'
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 
-const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRemoveLocalMessage,onFail }) => {
+const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRemoveLocalMessage,onFail,replyTo,setReplyTo }) => {
   const [sendEnable, setSendEnable] = useState(false);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -96,7 +96,8 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId,onAddLocalMessage,onRe
         onAddLocalMessage(optimisticMsg);
     try {
       setIsSending(true);
-      await sendMessage(chatroomId, message, myUid, myName, otherUserId);
+      await sendMessage(chatroomId, message, myUid, myName, otherUserId,replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null);
+      setReplyTo(null);
       onRemoveLocalMessage(tempId);
       setMessage('');
       setSendEnable(false);

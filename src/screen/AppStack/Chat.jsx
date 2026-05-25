@@ -5,13 +5,13 @@ import { colors } from '../../constant'
 import WpWallpaper from '../../assets/image/wpBackground.png'
 import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
-import { Timestamp } from '@react-native-firebase/firestore'
 
 const Chat = () => {
   const route = useRoute();
   const [previewUrl, setPreviewUrl] = useState('');
   const [failedMessages, setFailedMessages] = useState([]);
   const [localMessages, setLocalMessages]   = useState([]);
+  const [replyTo, setReplyTo] = useState(null);
 
   const { chatroomId, otherUserId } = route.params;
 
@@ -23,7 +23,7 @@ const Chat = () => {
       />
       <ChatHeader userId={otherUserId} />
       <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
-        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId}         localMessages={localMessages}
+        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId}         localMessages={localMessages} replyTo={replyTo} setReplyTo={setReplyTo}
       />
         {
           previewUrl ? (
@@ -93,7 +93,9 @@ const Chat = () => {
             ...prev,
             { id: tempId, text, timestamp: new Date() }
         ]);
-    }}
+      }}
+      replyTo={replyTo}
+      setReplyTo={setReplyTo}
       />
       </ImageBackground>
     </View>

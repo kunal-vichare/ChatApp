@@ -9,9 +9,9 @@ import { Loader } from '../../../component/MainTab/Chats';
 import { getChatDaySeparator } from '../../../utils/GetTime'
 import { getStatusIcon } from '../../../utils/GetStatusIcon';
 import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus, addReaction } from '../../../database/firestoreCRUD';
-import { FailedMessage, ReactionDisplay, ReactionPicker } from '../../../component/MainTab/Chats';
+import { FailedMessage, ReactionDisplay, ReactionPicker, SwipeableMessage } from '../../../component/MainTab/Chats';
 
-const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages }) => {
+const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages, replyTo, setReplyTo }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [lastDoc, setLastDoc] = useState(null);
@@ -136,110 +136,138 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         }
     };
 
-    const UserMessageView = ({ message, time, isFirst, isLast, isMiddle, status, reactions, messageId }) => (
-        <View style={styles.userContainer}>
-            <View style={styles.userBubbleWrapper}>
-                <TouchableOpacity
-                    onLongPress={() => setReactionTarget(messageId)}
-                    activeOpacity={0.8}
-                    style={styles.btn}
-                >
-                    <View style={styles.userInnerContainer}>
-                        {isFirst && (
-                            <Text style={styles.sender}>You</Text>
-                        )}
-                        <Text style={styles.message}>{message}</Text>
-                        <View style={styles.metaContainer}>
-                            <Text style={styles.time}>{status !== 'pending' ? time : null}</Text>
-                            <View style={styles.statusIcon}>
-                                {getStatusIcon(status)}
+    const UserMessageView = ({ message, time, isFirst, status, reactions, messageId, replyTo }) => (
+    <View style={styles.userContainer}>
+        <View style={styles.userBubbleWrapper}>
+            <TouchableOpacity
+                onLongPress={() => setReactionTarget(messageId)}
+                activeOpacity={0.8}
+                style={styles.btn}
+            >
+                <View style={styles.userInnerContainer}>
+                    {isFirst && (
+                        <Text style={styles.sender}>You</Text>
+                    )}
+                    {replyTo && (
+                        <View style={styles.quotedMessage}>
+                            <View style={styles.quotedAccent} />
+                            <View>
+                                <Text style={styles.quotedName}>{replyTo.senderName}</Text>
+                                <Text style={styles.quotedText} numberOfLines={1}>
+                                    {replyTo.text}
+                                </Text>
                             </View>
                         </View>
-                    </View>
-                </TouchableOpacity>
-                <ReactionDisplay
-                    reactions={reactions}
-                    myUid={myUid}
-                    onPress={(emoji) => {
-                        setReactionTarget(messageId);
-                        handleReaction(emoji);
-                    }}
-                />
-            </View>
-        </View>
-    );
-
-    const OtherUserMessageView = ({ message, time, senderName, isFirst, isLast, isMiddle, reactions, messageId }) => (
-        <View style={styles.otherUserContainer}>
-            <View style={styles.otherInnerView}>
-                <TouchableOpacity
-                    onLongPress={() => setReactionTarget(messageId)}
-                    activeOpacity={0.8}
-                    style={styles.btn}
-                >
-                    <View style={styles.otherUserInnerContainer}>
-                        {
-                            isFirst &&
-                            <Text style={styles.receiver}>{senderName}</Text>
-                        }
-                        <Text style={styles.message}>{message}</Text>
-                        <View style={styles.metaContainer}>
-                            <Text style={styles.time}>{time}</Text>
+                    )}
+                    <Text style={styles.message}>{message}</Text>
+                    <View style={styles.metaContainer}>
+                        <Text style={styles.time}>{status !== 'pending' ? time : null}</Text>
+                        <View style={styles.statusIcon}>
+                            {getStatusIcon(status)}
                         </View>
                     </View>
-                </TouchableOpacity>
-                    <ReactionDisplay
-                    reactions={reactions}
-                    myUid={myUid}
-                    onPress={(emoji) => {
-                        setReactionTarget(messageId);
-                        handleReaction(emoji);
-                    }}
-                />
-            </View>
+                </View>
+            </TouchableOpacity>
+            <ReactionDisplay
+                reactions={reactions}
+                myUid={myUid}
+                onPress={(emoji) => {
+                    setReactionTarget(messageId);
+                    handleReaction(emoji);
+                }}
+            />
         </View>
-    );
+    </View>
+);
+
+const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, messageId, replyTo }) => (
+    <View style={styles.otherUserContainer}>
+        <View style={styles.otherInnerView}>
+            <TouchableOpacity
+                onLongPress={() => setReactionTarget(messageId)}
+                activeOpacity={0.8}
+                style={styles.btn}
+            >
+                <View style={styles.otherUserInnerContainer}>
+                    {isFirst && (
+                        <Text style={styles.receiver}>{senderName}</Text>
+                    )}
+                    {replyTo && (
+                        <View style={styles.quotedMessage}>
+                            <View style={styles.quotedAccent} />
+                            <View>
+                                <Text style={styles.quotedName}>{replyTo.senderName}</Text>
+                                <Text style={styles.quotedText} numberOfLines={1}>
+                                    {replyTo.text}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+                    <Text style={styles.message}>{message}</Text>
+                    <View style={styles.metaContainer}>
+                        <Text style={styles.time}>{time}</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
+            <ReactionDisplay
+                reactions={reactions}
+                myUid={myUid}
+                onPress={(emoji) => {
+                    setReactionTarget(messageId);
+                    handleReaction(emoji);
+                }}
+            />
+        </View>
+    </View>
+);
 
     const renderItem = ({ item, index }) => {
         const time = formatTimestamp(item.timestamp);
         const { isFirst, isLast, isMiddle } = getGroupFlags(index);
-
         const currentDate = new Date(item.timestamp) || null;
-        const previousDate = allMessages[index + 1] ? new Date(allMessages[index + 1].timestamp) : null;
-        const separatorLabel = (currentDate && previousDate) ? getChatDaySeparator(currentDate, previousDate) : null;
+        const previousDate = allMessages[index + 1]
+            ? new Date(allMessages[index + 1].timestamp)
+            : null;
+        const separatorLabel =
+            currentDate && previousDate
+                ? getChatDaySeparator(currentDate, previousDate)
+                : null;
+
+        const isMyMessage = item.senderId === myUid;
 
         return (
             <>
-                {
-                    item.senderId === myUid ? (
+                <SwipeableMessage
+                    isMyMessage={isMyMessage}
+                    onSwipe={() => setReplyTo(item)}
+                >
+                    {isMyMessage ? (
                         <UserMessageView
                             message={item.text}
                             time={time}
-                            isFirst={isFirst}
-                            isLast={isLast}
-                            isMiddle={isMiddle}
+                            isFirst={isFirst} isLast={isLast} isMiddle={isMiddle}
                             status={item.status}
                             reactions={item.reactions || {}}
                             messageId={item.id}
+                            replyTo={item.replyTo || null}
                         />
                     ) : (
                         <OtherUserMessageView
                             message={item.text}
                             time={time}
                             senderName={item.senderName}
-                            isFirst={isFirst}
-                            isLast={isLast}
-                            isMiddle={isMiddle}
+                            isFirst={isFirst} isLast={isLast} isMiddle={isMiddle}
                             reactions={item.reactions || {}}
                             messageId={item.id}
+                            replyTo={item.replyTo || null} 
                         />
-                    )
-                }
-                {(separatorLabel && item.status !== 'pending') ?
-                    <DateSeparator label={separatorLabel} /> : null
-                }
+                    )}
+                </SwipeableMessage>
+                {separatorLabel && item.status !== 'pending'
+                    ? <DateSeparator label={separatorLabel} />
+                    : null}
             </>
-        )
+        );
     };
 
     return (
@@ -324,6 +352,22 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                     />
                 </TouchableOpacity>
             }
+            {replyTo && (
+                <View style={styles.replyBar}>
+                    <View style={styles.replyBarAccent} />
+                    <View style={styles.replyBarContent}>
+                        <Text style={styles.replyBarName}>
+                            {replyTo.senderId === myUid ? 'You' : replyTo.senderName}
+                        </Text>
+                        <Text style={styles.replyBarText} numberOfLines={1}>
+                            {replyTo.text}
+                        </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setReplyTo(null)}>
+                        <VectorIcon type="FontAwesome5" name="times" size={16} color={colors.textGrey} />
+                    </TouchableOpacity>
+                </View>
+            )}
             <ReactionPicker
                 visible={reactionTarget !== null}
                 onSelect={handleReaction}
@@ -441,7 +485,7 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.highlight,
     },
     typingContainer: {
-        alignItems:'center',
+        alignItems: 'center',
         paddingHorizontal: 14,
         paddingVertical: 6,
     },
@@ -508,6 +552,62 @@ const styles = StyleSheet.create({
         color: colors.textGrey,
         fontFamily: fontFamily.popinsRegular,
     },
+    replyBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F0F2F5',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        gap: 10,
+        borderRadius:10,
+        marginLeft:10,
+        marginRight:'20%'
+    },
+    replyBarAccent: {
+        width: 3,
+        alignSelf: 'stretch',
+        borderRadius: 2,
+        backgroundColor: '#a900fe',
+    },
+    replyBarContent: {
+        flex: 1,
+    },
+    replyBarName: {
+        fontSize: 12,
+        fontWeight: fontWeight.bold,
+        color: colors.secondary,
+        fontFamily: fontFamily.popinsBold,
+    },
+    replyBarText: {
+        fontSize: 13,
+        color: colors.textGrey,
+        fontFamily: fontFamily.popinsRegular,
+    },
+    quotedMessage: {
+    flexDirection: 'row',
+    backgroundColor: '#f0eeee',
+    borderRadius: 8,
+    padding: 6,
+    marginBottom: 4,
+    gap: 6,
+},
+quotedAccent: {
+    width: 3,
+    borderRadius: 2,
+    backgroundColor: '#a900fe',
+},
+quotedName: {
+    fontSize: fontSize.base,
+    fontWeight: '600',
+    color: colors.secondary,
+    fontFamily: fontFamily.popinsBold,
+},
+quotedText: {
+    fontSize: 12,
+    fontWeight:fontWeight.highlight,
+    color: '#555',
+    fontFamily: fontFamily.popinsRegular,
+},
 });
 
 export default ChatBody;
