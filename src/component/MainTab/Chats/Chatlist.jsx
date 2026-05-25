@@ -1,5 +1,5 @@
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { FlatlistRender } from '.'
 import Lock from 'react-native-vector-icons/Fontisto'
 import { colors, fontFamily, fontWeight } from '../../../constant'
@@ -9,95 +9,106 @@ import { formatTimestamp } from '../../../utils/GetTime'
 import VectorIcon from '../../../utils/VectorIcons'
 import { Loader } from '../../../component/MainTab/Chats'
 import useColors from '../../../hook/useColors'
+import { markAllDelivered } from '../../../database/firestoreCRUD'
+import { useFocusEffect } from '@react-navigation/native'
 
 const Chatlist = ({ search }) => {
-    const colors = useColors();
-    const styles = createStyles(colors);
+  const colors = useColors();
+  const styles = createStyles(colors);
 
-    const [chatList, setChatList] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const myUid = useSelector(state => state.auth.user.uid);
+  const [chatList, setChatList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const myUid = useSelector(state => state.auth.user.uid);
 
-    useEffect(() => {
-        const unsubscribers = [];
+  useEffect(() => {
+    const unsubscribers = [];
 
-        //chat collection
-        const unsubscribeChats = firestore()
-            .collection('chats')
-            .where('participants', 'array-contains', myUid)
-            .onSnapshot(snapshot => {
+    //chat collection
+    const unsubscribeChats = firestore()
+      .collection('chats')
+      .where('participants', 'array-contains', myUid)
+      .onSnapshot(snapshot => {
 
-                snapshot.docs.forEach(chatDoc => {
-                    const data = chatDoc.data();                    
-                    const chatId = chatDoc.id;
-                    const otherUid = data.participants.find(uid => uid !== myUid);
+        snapshot.docs.forEach(chatDoc => {
+          const data = chatDoc.data();
+          const chatId = chatDoc.id;
+          const otherUid = data.participants.find(uid => uid !== myUid);
 
-                    //userDoc for each chat
-                    const unsubscribeUser = firestore()
-                        .collection('users')
-                        .doc(otherUid)
-                        .onSnapshot(userDoc => {
-                            const userData = userDoc.data();
-                            // Update only this specific chat in state
-                            setChatList(prev => {
-                                const existingIndex = prev.findIndex(
-                                    c => c.chatId === chatId
-                                );
+          //userDoc for each chat
+          const unsubscribeUser = firestore()
+            .collection('users')
+            .doc(otherUid)
+            .onSnapshot(userDoc => {
+              const userData = userDoc.data();
+              // Update only this specific chat in state
+              setChatList(prev => {
+                const existingIndex = prev.findIndex(
+                  c => c.chatId === chatId
+                );
 
-                                const updatedChat = {
-                                    chatId,
-                                    id: userData?.uid,
-                                    name: userData?.name,
-                                    profileImage: userData?.profileImage,
-                                    lastSeen: userData?.lastSeen,
-                                    isOnline: userData?.isOnline,
-                                    lastMessage: data?.lastMessage,
-                                    lastMessageStatus:data?.lastMessageStatus,      
-                                    lastMessageSenderId:data?.lastMessageSenderId,
-                                    typing:data?.typing,
-                                    updatedAt: formatTimestamp(data?.updatedAt),
-                                    unreadCount:  data?.unreadCount?.[myUid] || 0,
-                                };
+                const updatedChat = {
+                  chatId,
+                  id: userData?.uid,
+                  name: userData?.name,
+                  profileImage: userData?.profileImage,
+                  lastSeen: userData?.lastSeen,
+                  isOnline: userData?.isOnline,
+                  lastMessage: data?.lastMessage,
+                  lastMessageStatus: data?.lastMessageStatus,
+                  lastMessageSenderId: data?.lastMessageSenderId,
+                  typing: data?.typing,
+                  updatedAt: formatTimestamp(data?.updatedAt),
+                  unreadCount: data?.unreadCount?.[myUid] || 0,
+                };
 
-                                if (existingIndex !== -1) {
-                                    const updated = [...prev];
-                                    updated[existingIndex] = updatedChat;
-                                    return updated;
-                                } else {
-                                    return [...prev, updatedChat];
-                                }
-                            });
-                            setLoading(false);
-                        });
-                    unsubscribers.push(unsubscribeUser);
-                });
-
-                // Handle empty snapshot
-                if (snapshot.empty) {
-                    setLoading(false);
+                if (existingIndex !== -1) {
+                  const updated = [...prev];
+                  updated[existingIndex] = updatedChat;
+                  return updated;
+                } else {
+                  return [...prev, updatedChat];
                 }
+              });
+              setLoading(false);
             });
+          unsubscribers.push(unsubscribeUser);
+        });
 
-        unsubscribers.push(unsubscribeChats);
 
-        // Cleanup ALL listeners on unmount
-        return () => {
-            unsubscribers.forEach(unsub => unsub());
-        };
+        // Handle empty snapshot
+        if (snapshot.empty) {
+          setLoading(false);
+        }
+      });
 
-    }, [myUid]);
+    unsubscribers.push(unsubscribeChats);
 
-    // Sort by latest message
-    const sortedList = [...chatList].sort((a, b) => {
-        if (!a.updatedAt) return 1;
-        if (!b.updatedAt) return -1;
-        return b.updatedAt - a.updatedAt;
-    });
+    // Cleanup ALL listeners on unmount
+    return () => {
+      unsubscribers.forEach(unsub => unsub());
+    };
 
-    // Search filter
-    const finalData = sortedList.filter(item =>
-        item?.name?.toLowerCase().includes(search?.toLowerCase() || '')
-    );
+  }, [myUid]);
+
+  const getAlldelivered = (myUid) => {
+    markAllDelivered(myUid)
+  }
+
+  useEffect(() => {
+    getAlldelivered(myUid)
+  }, [chatList])
+
+  // Sort by latest message
+  const sortedList = [...chatList].sort((a, b) => {
+    if (!a.updatedAt) return 1;
+    if (!b.updatedAt) return -1;
+    return b.updatedAt - a.updatedAt;
+  });
+
+  // Search filter
+  const finalData = sortedList.filter(item =>
+    item?.name?.toLowerCase().includes(search?.toLowerCase() || '')
+  );
 
   return (
     <View style={styles.container}>

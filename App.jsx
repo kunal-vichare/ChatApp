@@ -42,15 +42,6 @@ const App = () => {
             }),
           );
 
-          //mark user online on login
-          await firestore()
-            .collection('users')
-            .doc(user.uid)
-            .update({
-              isOnline: true,
-            });
-          await markAllDelivered(user.uid);
-
         } else {
           const currentUser = auth().currentUser;
 

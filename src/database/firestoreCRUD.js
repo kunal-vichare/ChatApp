@@ -92,41 +92,6 @@ export const sendMessage = async (chatroomId, text, senderId, senderName, receiv
     }
 };
 
-export const markAllDelivered = async (myUid) => {
-    try {
-        const chatsSnap = await firestore()
-            .collection('chats')
-            .where('participants', 'array-contains', myUid)
-            .get();
-
-        for (const chatDoc of chatsSnap.docs) {
-
-            // Only one where clause — no composite index needed
-            const sentMsgs = await firestore()
-                .collection('chats')
-                .doc(chatDoc.id)
-                .collection('messages')
-                .where('status', '==', 'sent')
-                .get();
-
-            if (sentMsgs.empty) continue;
-
-            const batch = firestore().batch();
-
-            sentMsgs.docs.forEach(doc => {
-                // Filter out MY own messages in JS instead of Firestore
-                if (doc.data().senderId !== myUid) {
-                    batch.update(doc.ref, { status: 'delivered' });
-                }
-            });
-
-            await batch.commit();
-        }
-    } catch (error) {
-        console.log('markAllDelivered error:', error);
-    }
-};
-
 // Subscribe to latest messages (realtime, paginated)
 export const subscribeToMessages = (chatroomId, PAGE_SIZE, onUpdate, onError) => {
     return firestore()
@@ -198,6 +163,76 @@ export const updateMessageStatus = async (chatroomId, msgs, myUid) => {
             .collection('chats')
             .doc(chatroomId)
             .update({ lastMessageStatus: 'read' });
+    }
+};
+
+export const markAllDelivered = async (myUid) => {
+    try {
+        const chatsSnap = await firestore()
+            .collection('chats')
+            .where('participants', 'array-contains', myUid)
+            .get();
+
+        for (const chatDoc of chatsSnap.docs) {
+            const chatroomId = chatDoc.id;
+
+            const sentMsgs = await firestore()
+                .collection('chats')
+                .doc(chatroomId)
+                .collection('messages')
+                .where('status', '==', 'sent')
+                .get();
+
+            if (sentMsgs.empty) continue;
+
+            const batch = firestore().batch();
+            let hasUpdates = false;
+
+            sentMsgs.docs.forEach(doc => {
+                if (doc.data().senderId !== myUid) {
+                    batch.update(doc.ref, { status: 'delivered' });
+                    hasUpdates = true;
+                }
+            });
+
+            if (!hasUpdates) continue;
+
+            await batch.commit();
+
+            // ✅ Check directly from sentMsgs — no need for extra query
+            // Sort by timestamp to find the last message among updated ones
+            const otherUserMsgs = sentMsgs.docs
+                .filter(doc => doc.data().senderId !== myUid)
+                .sort((a, b) => b.data().timestamp - a.data().timestamp);
+
+            if (otherUserMsgs.length === 0) continue;
+
+            const lastUpdatedMsg = otherUserMsgs[0].data();
+
+            // Only update outer if this last updated msg is also
+            // the last message of the entire chatroom
+            const lastMsgSnap = await firestore()
+                .collection('chats')
+                .doc(chatroomId)
+                .collection('messages')
+                .orderBy('timestamp', 'desc')
+                .limit(1)
+                .get();
+
+            if (lastMsgSnap.empty) continue;
+
+            const lastMsg = lastMsgSnap.docs[0].data();
+
+            // ✅ No status check — just verify last msg belongs to other user
+            if (lastMsg.senderId !== myUid) {
+                await firestore()
+                    .collection('chats')
+                    .doc(chatroomId)
+                    .update({ lastMessageStatus: 'delivered' });
+            }
+        }
+    } catch (error) {
+        console.log('markAllDelivered error:', error);
     }
 };
 

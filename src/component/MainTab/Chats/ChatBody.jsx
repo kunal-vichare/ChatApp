@@ -27,7 +27,11 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     const myUid = useSelector(state => state.auth.user.uid);
     const myName = useSelector((state) => state.auth.user.name);
 
-    const allMessages = [...localMessages, ...messages];
+    const allMessages = [
+        ...new Map(
+            [...localMessages, ...messages].map(item => [item.id, item])
+        ).values()
+    ];
     const flatListRef = useRef(null);
     const PAGE_SIZE = 10;
 
@@ -138,104 +142,118 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     };
 
     const UserMessageView = ({ message, time, isFirst, status, reactions, messageId, replyTo, urlPreview }) => (
-    <View style={styles.userContainer}>
-        <View style={styles.userBubbleWrapper}>
-            <TouchableOpacity
-                onLongPress={() => setReactionTarget(messageId)}
-                activeOpacity={0.8}
-                style={styles.btn}
-            >
-                <View style={styles.userInnerContainer}>
-                    {isFirst && (
-                        <Text style={styles.sender}>You</Text>
-                    )}
-                    {replyTo && (
-                        <View style={styles.quotedMessage}>
-                            <View style={styles.quotedAccent} />
-                            <View>
-                                <Text style={styles.quotedName}>{replyTo.senderName}</Text>
-                                <Text style={styles.quotedText} numberOfLines={1}>
-                                    {replyTo.text}
-                                </Text>
+        <View style={styles.userContainer}>
+            <View style={styles.userBubbleWrapper}>
+                <TouchableOpacity
+                    onLongPress={() => setReactionTarget(messageId)}
+                    activeOpacity={0.8}
+                    style={styles.btn}
+                >
+                    <View style={styles.userInnerContainer}>
+                        {isFirst && (
+                            <Text style={styles.sender}>You</Text>
+                        )}
+                        {replyTo && (
+                            <View style={styles.quotedMessage}>
+                                <View style={styles.quotedAccent} />
+                                <View>
+                                    <Text style={styles.quotedName}>{replyTo.senderName}</Text>
+                                    <Text style={styles.quotedText} numberOfLines={1}>
+                                        {replyTo.text}
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
+                        {urlPreview && (
+                            <LinkPreview
+                                url={urlPreview}
+                                timeout={3000}
+                                onError={(e) => console.log(e)}
+                                containerStyle={styles.linkPreviewContainer}
+                                imageStyle={styles.linkPreviewImage}
+                                textContainerStyle={styles.linkPreviewTextContainer}
+                                titleStyle={styles.linkPreviewTitle}
+                                descriptionStyle={styles.linkPreviewDesc}
+                                titleLines={1}
+                                descriptionLines={2}
+                            />
+                        )}
+
+                        <Text style={styles.message}>{message}</Text>
+                        <View style={styles.metaContainer}>
+                            <Text style={styles.time}>{status !== 'pending' ? time : null}</Text>
+                            <View style={styles.statusIcon}>
+                                {getStatusIcon(status)}
                             </View>
                         </View>
-                    )}
-                      {urlPreview && (
-                        <LinkPreview
-                            url={urlPreview}
-                            timeout={3000}
-                            onError={(e) => console.log(e)}
-                            containerStyle={styles.linkPreviewContainer}
-                            imageStyle={styles.linkPreviewImage}
-                            textContainerStyle={styles.linkPreviewTextContainer}
-                            titleStyle={styles.linkPreviewTitle}
-                            descriptionStyle={styles.linkPreviewDesc}
-                            titleLines={1}
-                            descriptionLines={2}
-                        />
-                    )}
-
-                    <Text style={styles.message}>{message}</Text>
-                    <View style={styles.metaContainer}>
-                        <Text style={styles.time}>{status !== 'pending' ? time : null}</Text>
-                        <View style={styles.statusIcon}>
-                            {getStatusIcon(status)}
-                        </View>
                     </View>
-                </View>
-            </TouchableOpacity>
-            <ReactionDisplay
-                reactions={reactions}
-                myUid={myUid}
-                onPress={(emoji) => {
-                    setReactionTarget(messageId);
-                    handleReaction(emoji);
-                }}
-            />
+                </TouchableOpacity>
+                <ReactionDisplay
+                    reactions={reactions}
+                    myUid={myUid}
+                    onPress={(emoji) => {
+                        setReactionTarget(messageId);
+                        handleReaction(emoji);
+                    }}
+                />
+            </View>
         </View>
-    </View>
-);
+    );
 
-const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, messageId, replyTo }) => (
-    <View style={styles.otherUserContainer}>
-        <View style={styles.otherInnerView}>
-            <TouchableOpacity
-                onLongPress={() => setReactionTarget(messageId)}
-                activeOpacity={0.8}
-                style={styles.btn}
-            >
-                <View style={styles.otherUserInnerContainer}>
-                    {isFirst && (
-                        <Text style={styles.receiver}>{senderName}</Text>
-                    )}
-                    {replyTo && (
-                        <View style={styles.quotedMessage}>
-                            <View style={styles.quotedAccent} />
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.quotedName}>{replyTo.senderName}</Text>
-                                <Text style={styles.quotedText} numberOfLines={1}>
-                                    {replyTo.text}
-                                </Text>
+    const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, messageId, replyTo, urlPreview }) => (
+        <View style={styles.otherUserContainer}>
+            <View style={styles.otherBubbleWrapper}>
+                <TouchableOpacity
+                    onLongPress={() => setReactionTarget(messageId)}
+                    activeOpacity={0.8}
+                    style={styles.btn}
+                >
+                    <View style={styles.otherUserInnerContainer}>
+                        {isFirst && (
+                            <Text style={styles.receiver}>{senderName}</Text>
+                        )}
+                        {replyTo && (
+                            <View style={styles.quotedMessage}>
+                                <View style={styles.quotedAccent} />
+                                <View>
+                                    <Text style={styles.quotedName}>{replyTo.senderName}</Text>
+                                    <Text style={styles.quotedText} numberOfLines={1}>
+                                        {replyTo.text}
+                                    </Text>
+                                </View>
                             </View>
+                        )}
+                        {urlPreview && (
+                            <LinkPreview
+                                url={urlPreview}
+                                timeout={3000}
+                                onError={(e) => console.log(e)}
+                                containerStyle={styles.linkPreviewContainer}
+                                imageStyle={styles.linkPreviewImage}
+                                textContainerStyle={styles.linkPreviewTextContainer}
+                                titleStyle={styles.linkPreviewTitle}
+                                descriptionStyle={styles.linkPreviewDesc}
+                                titleLines={1}
+                                descriptionLines={2}
+                            />
+                        )}
+                        <Text style={styles.message}>{message}</Text>
+                        <View style={styles.metaContainer}>
+                            <Text style={styles.time}>{time}</Text>
                         </View>
-                    )}
-                    <Text style={styles.message}>{message}</Text>
-                    <View style={styles.metaContainer}>
-                        <Text style={styles.time}>{time}</Text>
                     </View>
-                </View>
-            </TouchableOpacity>
-            <ReactionDisplay
-                reactions={reactions}
-                myUid={myUid}
-                onPress={(emoji) => {
-                    setReactionTarget(messageId);
-                    handleReaction(emoji);
-                }}
-            />
+                </TouchableOpacity>
+                <ReactionDisplay
+                    reactions={reactions}
+                    myUid={myUid}
+                    onPress={(emoji) => {
+                        setReactionTarget(messageId);
+                        handleReaction(emoji);
+                    }}
+                />
+            </View>
         </View>
-    </View>
-);
+    );
 
     const renderItem = ({ item, index }) => {
         const time = formatTimestamp(item.timestamp);
@@ -276,7 +294,8 @@ const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, m
                             isFirst={isFirst} isLast={isLast} isMiddle={isMiddle}
                             reactions={item.reactions || {}}
                             messageId={item.id}
-                            replyTo={item.replyTo || null} 
+                            replyTo={item.replyTo || null}
+                            urlPreview={item.urlPreview || null}
                         />
                     )}
                 </SwipeableMessage>
@@ -315,7 +334,7 @@ const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, m
                         }
                         inverted
                         onEndReached={handleFetchMore}
-                        onEndReachedThreshold={0.2}
+                        // onEndReachedThreshold={0.2}
                         onScroll={(event) => {
                             const offsetY = event.nativeEvent.contentOffset.y;
                             setShowScrollToEnd(offsetY > 300);
@@ -576,9 +595,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 8,
         gap: 10,
-        borderRadius:10,
-        marginLeft:10,
-        marginRight:'20%'
+        borderRadius: 10,
+        marginLeft: 10,
+        marginRight: '20%'
     },
     replyBarAccent: {
         width: 3,
@@ -601,59 +620,60 @@ const styles = StyleSheet.create({
         fontFamily: fontFamily.popinsRegular,
     },
     quotedMessage: {
-    flexDirection: 'row',
-    backgroundColor: '#f0eeee',
-    borderRadius: 8,
-    padding: 6,
-    marginBottom: 4,
-    gap: 6,
-},
-quotedAccent: {
-    width: 3,
-    borderRadius: 2,
-    backgroundColor: '#a900fe',
-},
-quotedName: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.secondary,
-    fontFamily: fontFamily.popinsBold,
-},
-quotedText: {
-    fontSize: 12,
-    fontWeight:fontWeight.highlight,
-    color: '#555',
-    fontFamily: fontFamily.popinsRegular,
-},
-linkPreviewContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    marginBottom: 6,
-    // overflow: 'hidden',
-    padding: 8,
-},
-linkPreviewImage: {
-    // height: '80%',
-    width: '30%',
-    borderRadius: 6,
-    resizeMode: 'cover',
-},
-linkPreviewTextContainer: {
-    flex: 1,
-    marginLeft: 8,
-    justifyContent: 'center',
-},
-linkPreviewTitle: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: colors.secondary,
-},
-linkPreviewDesc: {
-    fontSize: 11,
-    color: '#666',
-},
+        flexDirection: 'row',
+        backgroundColor: '#f0eeee',
+        borderRadius: 8,
+        padding: 6,
+        marginBottom: 4,
+        gap: 6,
+    },
+    quotedAccent: {
+        width: 3,
+        borderRadius: 2,
+        backgroundColor: '#a900fe',
+    },
+    quotedName: {
+        fontSize: fontSize.base,
+        fontWeight: '600',
+        color: colors.secondary,
+        fontFamily: fontFamily.popinsBold,
+    },
+    quotedText: {
+        fontSize: 12,
+        fontWeight: fontWeight.highlight,
+        color: '#555',
+        fontFamily: fontFamily.popinsRegular,
+    },
+    linkPreviewContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 8,
+        backgroundColor: '#fff',
+        // marginBottom: 6,
+        // overflow: 'hidden',
+        padding: 4,
+        maxWidth: '99%'
+    },
+    linkPreviewImage: {
+        // height: '80%',
+        maxWidth: '30%',
+        borderRadius: 6,
+        resizeMode: 'contain',
+    },
+    linkPreviewTextContainer: {
+        // flex: 1,
+        marginLeft: 8,
+        justifyContent: 'center',
+    },
+    linkPreviewTitle: {
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: colors.secondary,
+    },
+    linkPreviewDesc: {
+        fontSize: 11,
+        color: '#666',
+    },
 });
 
 export default ChatBody;
