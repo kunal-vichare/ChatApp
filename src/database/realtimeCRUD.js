@@ -1,4 +1,6 @@
 import database from '@react-native-firebase/database';
+import firestore from '@react-native-firebase/firestore';
+import {formatTimestamp} from '../utils/GetTime'
 
 export const addUserData = async(userData)=>{
     try {
@@ -39,3 +41,87 @@ export const deleteUser = async (id) => {
     }
 }
 
+export const subscribeToChatList = (myUid, setChatList, setLoading) => {
+    const unsubscribers = [];
+
+    const unsubscribeChats = firestore()
+        .collection('chats')
+        .where('participants', 'array-contains', myUid)
+        .onSnapshot(snapshot => {
+
+            if (snapshot.empty) {
+                setLoading(false);
+                return;
+            }
+
+            snapshot.docs.forEach(chatDoc => {
+                const data = chatDoc.data();
+                const chatId = chatDoc.id;
+
+                if (data.isGroup) {
+                    setChatList(prev => {
+                        const existingIndex = prev.findIndex(c => c.chatId === chatId);
+                        const updatedChat = {
+                            chatId,
+                            isGroup: true,
+                            name: data.groupName || 'Group',
+                            profileImage: data.groupImage || '',
+                            lastMessage: data.lastMessage || '',
+                            lastMessageStatus: data.lastMessageStatus || '',
+                            lastMessageSenderId: data.lastMessageSenderId || '',
+                            updatedAt: formatTimestamp(data.updatedAt),
+                            unreadCount: data.unreadCount?.[myUid] || 0,
+                            typing: data.typing || {},
+                        };
+                        if (existingIndex !== -1) {
+                            const updated = [...prev];
+                            updated[existingIndex] = updatedChat;
+                            return updated;
+                        }
+                        return [...prev, updatedChat];
+                    });
+                    setLoading(false);
+
+                } else {
+                    const otherUid = data.participants.find(uid => uid !== myUid);
+
+                    const unsubscribeUser = firestore()
+                        .collection('users')
+                        .doc(otherUid)
+                        .onSnapshot(userDoc => {
+                            const userData = userDoc.data();
+                            setChatList(prev => {
+                                const existingIndex = prev.findIndex(c => c.chatId === chatId);
+                                const updatedChat = {
+                                    chatId,
+                                    isGroup: false,
+                                    id: userData?.uid,
+                                    name: userData?.name,
+                                    profileImage: userData?.profileImage,
+                                    lastSeen: userData?.lastSeen,
+                                    isOnline: userData?.isOnline,
+                                    lastMessage: data.lastMessage || '',
+                                    lastMessageStatus: data.lastMessageStatus || '',
+                                    lastMessageSenderId: data.lastMessageSenderId || '',
+                                    typing: data.typing || {},
+                                    updatedAt: formatTimestamp(data.updatedAt),
+                                    unreadCount: data.unreadCount?.[myUid] || 0,
+                                };
+                                if (existingIndex !== -1) {
+                                    const updated = [...prev];
+                                    updated[existingIndex] = updatedChat;
+                                    return updated;
+                                }
+                                return [...prev, updatedChat];
+                            });
+                            setLoading(false);
+                        });
+
+                    unsubscribers.push(unsubscribeUser);
+                }
+            });
+        });
+
+    unsubscribers.push(unsubscribeChats);
+    return () => unsubscribers.forEach(unsub => unsub());
+};

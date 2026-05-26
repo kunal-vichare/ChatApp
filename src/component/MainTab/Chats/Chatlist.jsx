@@ -11,6 +11,7 @@ import { Loader } from '../../../component/MainTab/Chats'
 import useColors from '../../../hook/useColors'
 import { markAllDelivered } from '../../../database/firestoreCRUD'
 import { useFocusEffect } from '@react-navigation/native'
+import {subscribeToChatList} from '../../../database/realtimeCRUD'
 
 const Chatlist = ({ search }) => {
   const colors = useColors();
@@ -21,74 +22,9 @@ const Chatlist = ({ search }) => {
   const myUid = useSelector(state => state.auth.user.uid);
 
   useEffect(() => {
-    const unsubscribers = [];
-
-    //chat collection
-    const unsubscribeChats = firestore()
-      .collection('chats')
-      .where('participants', 'array-contains', myUid)
-      .onSnapshot(snapshot => {
-
-        snapshot.docs.forEach(chatDoc => {
-          const data = chatDoc.data();
-          const chatId = chatDoc.id;
-          const otherUid = data.participants.find(uid => uid !== myUid);
-
-          //userDoc for each chat
-          const unsubscribeUser = firestore()
-            .collection('users')
-            .doc(otherUid)
-            .onSnapshot(userDoc => {
-              const userData = userDoc.data();
-              // Update only this specific chat in state
-              setChatList(prev => {
-                const existingIndex = prev.findIndex(
-                  c => c.chatId === chatId
-                );
-
-                const updatedChat = {
-                  chatId,
-                  id: userData?.uid,
-                  name: userData?.name,
-                  profileImage: userData?.profileImage,
-                  lastSeen: userData?.lastSeen,
-                  isOnline: userData?.isOnline,
-                  lastMessage: data?.lastMessage,
-                  lastMessageStatus: data?.lastMessageStatus,
-                  lastMessageSenderId: data?.lastMessageSenderId,
-                  typing: data?.typing,
-                  updatedAt: formatTimestamp(data?.updatedAt),
-                  unreadCount: data?.unreadCount?.[myUid] || 0,
-                };
-
-                if (existingIndex !== -1) {
-                  const updated = [...prev];
-                  updated[existingIndex] = updatedChat;
-                  return updated;
-                } else {
-                  return [...prev, updatedChat];
-                }
-              });
-              setLoading(false);
-            });
-          unsubscribers.push(unsubscribeUser);
-        });
-
-
-        // Handle empty snapshot
-        if (snapshot.empty) {
-          setLoading(false);
-        }
-      });
-
-    unsubscribers.push(unsubscribeChats);
-
-    // Cleanup ALL listeners on unmount
-    return () => {
-      unsubscribers.forEach(unsub => unsub());
-    };
-
-  }, [myUid]);
+    const unsubscribe = subscribeToChatList(myUid, setChatList, setLoading);
+    return () => unsubscribe();
+}, [myUid]);
 
   const getAlldelivered = (myUid) => {
     markAllDelivered(myUid)
