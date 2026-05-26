@@ -1,77 +1,59 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { useNavigation} from '@react-navigation/native'
-import { colors, fontFamily, fontSize, fontWeight, iconSize, padding } from '../../../constant'
+import { useNavigation } from '@react-navigation/native'
+import { colors, fontFamily, fontSize, fontWeight, iconSize, margin, padding } from '../../../constant'
 import VectorIcon from '../../../utils/VectorIcons'
 import firestore from '@react-native-firebase/firestore';
-import {formatWhatsAppLastSeen} from '../../../utils/GetTime'
+import { formatWhatsAppLastSeen } from '../../../utils/GetTime'
 
-const ChatHeader = ({ userId }) => {
+const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage }) => {
     const navigation = useNavigation();
-    const [userData, setUserData] = useState(null);  
+    const [memberCount, setMemberCount] = useState(0);
+    const [userData, setUserData] = useState(null);
 
     useEffect(() => {
-    if (!userId) return;
-
-    // Realtime listener
-    const unsubscribe = firestore()
-        .collection('users')
-        .doc(userId)
-        .onSnapshot(
-            snapshot => {
-                if (snapshot?.data()) {
-                    setUserData(snapshot.data());
-                }
-            },
-            error => {
-                console.log('Realtime user fetch error:', error);
-            }
-        );
-
-    // Cleanup listener
-    return () => unsubscribe();
-}, [userId]);
+        if (isGroup) {
+            // Listen to group doc for member count
+            return firestore().collection('chats').doc(chatroomId)
+                .onSnapshot(snap => {
+                    setMemberCount(snap.data()?.participants?.length || 0);
+                });
+        }
+        // existing 1-on-1 listener
+        if (!userId) return;
+        return firestore().collection('users').doc(userId)
+            .onSnapshot(snap => {
+                if (snap?.data()) setUserData(snap.data());
+            });
+    }, [userId, isGroup, chatroomId]);
 
     return (
         <View style={styles.container}>
             <View style={styles.firstContainer}>
-                <View style={{ paddingHorizontal: 10 }}>
-                    {/* <BackIcon /> */}
-                    <VectorIcon
-                        type="Ionicons"
-                        name="arrow-back"
-                        size={iconSize.xxl}
-                        color={colors.primary}
-                        onPress={() => navigation.goBack()}
-                    />
-                </View>
-                <Image source={{ uri: userData?.profileImage }} style={styles.img} />
-                <TouchableOpacity 
+                <VectorIcon
+                    type="Ionicons"
+                    name="arrow-back"
+                    size={iconSize.xxl}
+                    color={colors.primary}
+                    style={{ paddingLeft: 10 }}
+                    onPress={() => navigation.goBack()}
+                />
+                <TouchableOpacity
                     style={styles.textContainer}
-                    onPress={()=>navigation.navigate('AppStack',{
-                        screen:'ProfileScreen',
-                        params: { userData : userData },
+                    onPress={() => navigation.navigate('AppStack', {
+                        screen: 'ProfileScreen',
+                        params: { userData: userData },
                     })}
                 >
-                    <Text
-                        style={styles.name}
-                    >
-                        {userData?.name}
-                    </Text>
-                    {
-                        userData?.isOnline ?
-                            <Text style={styles.status}>
-                                Online
-                            </Text>
-                            :
-                            <Text style={styles.status} ellipsizeMode='tail'
-                                numberOfLines={1}
-                            >
-                                {
-                                    formatWhatsAppLastSeen(userData?.lastSeen)
-                                }
-                            </Text>
-                    }
+                    <Image source={isGroup ? { uri: groupImage } : { uri: userData?.profileImage }} style={styles.img} />
+                    <View style={styles.textInnerContainer}>
+                        <Text
+                            style={styles.name}
+                        >
+                            {isGroup ? groupName : userData?.name}
+                        </Text>
+                        <Text style={styles.status} numberOfLines={1}>{isGroup ? `${memberCount} members` : (userData?.isOnline ? 'Online' : formatWhatsAppLastSeen(userData?.lastSeen))}</Text>
+                    </View>
                 </TouchableOpacity>
             </View>
             <View style={styles.secondContainer}>
@@ -110,39 +92,43 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        // paddingTop: 30
+        paddingVertical: 10
+        // marginTop: 20,
     },
     img: {
         height: 54,
         width: 54,
         resizeMode: 'contain',
         borderRadius: 27,
-        marginTop: 20,
-        marginBottom: 10
     },
     firstContainer: {
         flexDirection: 'row',
         alignItems: 'center'
     },
+    textInnerContainer:{
+        marginLeft:10
+    },
     secondContainer: {
         flexDirection: 'row',
-        gap: 20,
-        paddingRight: padding.lg,
+        gap: 15,
+        marginRight: margin.base,
         alignItems: 'center'
     },
     textContainer: {
-        paddingLeft: padding.base,
-        maxWidth: 155,
+        paddingLeft: padding.xs,
+        alignItems: 'center',
+        maxWidth: 150,
+        flexDirection: 'row'
     },
     name: {
         fontWeight: fontWeight.bold,
-        fontSize: fontSize.regular,
+        fontSize: fontSize.md,
         color: colors.primary,
         fontFamily: fontFamily.popinsBold
     },
     status: {
         fontWeight: fontWeight.regular,
-        fontSize: fontSize.md,
+        fontSize: fontSize.base,
         color: colors.primary,
         fontFamily: fontFamily.popinsBold
     }

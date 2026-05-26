@@ -8,7 +8,7 @@ import { sendMessage } from '../../../database/firestoreCRUD'
 import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux';
 
-const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, onRemoveLocalMessage, onFail, replyTo, setReplyTo }) => {
+const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, onRemoveLocalMessage, onFail, replyTo, setReplyTo,participants, isGroup }) => {
   const [sendEnable, setSendEnable] = useState(false);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -16,6 +16,10 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
   const myName = useSelector(state => state.auth.user.name);
   const myUid = useSelector(state => state.auth.user.uid);
   const typingTimeoutRef = useRef(null);
+
+  const receiverIds = isGroup
+    ? (participants || []).filter(uid => uid !== myUid)
+    : [otherUserId];
 
   const updateTypingStatus = async (isTyping) => {
     try {
@@ -97,7 +101,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
     onAddLocalMessage(optimisticMsg);
     try {
       setIsSending(true);
-      await sendMessage(chatroomId, message, myUid, myName, otherUserId, replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null, urlPreview);
+      await sendMessage(chatroomId, message, myUid, myName, isGroup ? receiverIds : otherUserId, replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null, urlPreview);
       setReplyTo(null);
       onRemoveLocalMessage(tempId);
       setMessage('');

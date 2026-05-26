@@ -1,10 +1,12 @@
 import { View, Text, StatusBar, ImageBackground, StyleSheet, ActivityIndicator } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ChatHeader, FlatList, TypeBox, ChatBody } from '../../component/MainTab/Chats'
 import { colors } from '../../constant'
 import WpWallpaper from '../../assets/image/wpBackground.png'
 import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
+import {subscribeToChatInfo} from '../../database/firestoreCRUD'
+import firestore from '@react-native-firebase/firestore'
 
 const Chat = () => {
   const route = useRoute();
@@ -12,8 +14,17 @@ const Chat = () => {
   const [failedMessages, setFailedMessages] = useState([]);
   const [localMessages, setLocalMessages]   = useState([]);
   const [replyTo, setReplyTo] = useState(null);
+  const [chatInfo, setChatInfo] = useState(null);
 
   const { chatroomId, otherUserId } = route.params;
+  // const { chatroomId, otherUserId, isGroup, groupName } = route.params;
+
+  // Fetch chat metadata from Firestore
+useEffect(() => {
+    if (!chatroomId) return;
+    const unsubscribe = subscribeToChatInfo(chatroomId, setChatInfo);
+    return () => unsubscribe();
+}, [chatroomId]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -21,9 +32,9 @@ const Chat = () => {
         backgroundColor={colors.headerBack}
         barStyle="light-content"
       />
-      <ChatHeader userId={otherUserId} />
+      <ChatHeader userId={otherUserId} isGroup={chatInfo?.isGroup} groupName={chatInfo?.groupName} groupImage={chatInfo?.groupImage} chatroomId={chatroomId}/>
       <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
-        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId}         localMessages={localMessages} replyTo={replyTo} setReplyTo={setReplyTo}
+        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId} localMessages={localMessages} replyTo={replyTo} setReplyTo={setReplyTo}
       />
         {
           previewUrl ? (
@@ -75,6 +86,8 @@ const Chat = () => {
         chatroomId={chatroomId} 
         setPreviewUrl={setPreviewUrl} 
         otherUserId={otherUserId} 
+        isGroup={chatInfo?.isGroup}
+        participants={chatInfo?.participants}
         onAddLocalMessage={(msg) => {
           setLocalMessages(prev => [msg, ...prev]);
         }}

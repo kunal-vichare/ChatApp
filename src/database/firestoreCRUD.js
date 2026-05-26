@@ -81,10 +81,16 @@ export const sendMessage = async (chatroomId, text, senderId, senderName, receiv
 
         await firestore().collection('chats').doc(chatroomId).update({
             lastMessage: text,
-            lastMessageStatus:'sent',
+            lastMessageStatus: 'sent',
             lastMessageSenderId: senderId,
             updatedAt: Date.now(),
-            [`unreadCount.${receiverId}`]: firestore.FieldValue.increment(1)
+            ...(Array.isArray(receiverId)
+                ? receiverId.reduce((acc, uid) => {
+                    acc[`unreadCount.${uid}`] = firestore.FieldValue.increment(1);
+                    return acc;
+                }, {})
+                : { [`unreadCount.${receiverId}`]: firestore.FieldValue.increment(1) }
+            ),
         });
     } catch (error) {
         console.log('sendMessage error', error);
@@ -275,7 +281,7 @@ export const addReaction = async (chatroomId, messageId, emoji, myUid) => {
         .doc(messageId);
 
     const msgDoc = await msgRef.get();
-    
+
     const reactions = msgDoc.data()?.reactions || {};
 
     // Each emoji holds an array of uids who reacted with it
@@ -301,4 +307,49 @@ export const addReaction = async (chatroomId, messageId, emoji, myUid) => {
             [`reactions.${emoji}`]: firestore.FieldValue.arrayUnion(myUid)
         });
     }
+};
+
+// Create a group chatroom
+export const createGroupChat = async (myUid, memberUids, groupName) => {
+    const groupId = `group_${Date.now()}_${myUid}`;
+    const allParticipants = [myUid, ...memberUids];
+
+    await firestore().collection('chats').doc(groupId).set({
+        isGroup: true,
+        groupName,
+        groupAdmin: myUid,
+        participants: allParticipants,
+        lastMessage: '',
+        updatedAt: Date.now(),
+        groupImage:'https://cdn-icons-png.flaticon.com/256/8184/8184182.png',
+        unreadCount: allParticipants.reduce((acc, uid) => {
+            acc[uid] = 0;
+            return acc;
+        }, {}),
+    });
+
+    return groupId;
+};
+
+// Get group info (name, members)
+export const getGroupInfo = async (chatroomId) => {
+    const doc = await firestore().collection('chats').doc(chatroomId).get();
+    return doc.data();
+};
+
+export const subscribeToChatInfo = (chatroomId, onUpdate) => {
+    return firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .onSnapshot(snap => {
+            const data = snap.data();
+            if (data) {
+                onUpdate({
+                    isGroup: data.isGroup || false,
+                    groupName: data.groupName || '',
+                    participants: data.participants || [],
+                    groupImage: data.groupImage || null
+                });
+            }
+        });
 };
