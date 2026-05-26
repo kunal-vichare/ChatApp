@@ -320,6 +320,7 @@ export const createGroupChat = async (myUid, memberUids, groupName) => {
         groupAdmin: myUid,
         participants: allParticipants,
         lastMessage: '',
+        description:'Dream big, live bigger.',
         updatedAt: Date.now(),
         groupImage:'https://cdn-icons-png.flaticon.com/256/8184/8184182.png',
         unreadCount: allParticipants.reduce((acc, uid) => {
@@ -332,10 +333,10 @@ export const createGroupChat = async (myUid, memberUids, groupName) => {
 };
 
 // Get group info (name, members)
-export const getGroupInfo = async (chatroomId) => {
-    const doc = await firestore().collection('chats').doc(chatroomId).get();
-    return doc.data();
-};
+// export const getGroupInfo = async (chatroomId) => {
+//     const doc = await firestore().collection('chats').doc(chatroomId).get();
+//     return doc.data();
+// };
 
 export const subscribeToChatInfo = (chatroomId, onUpdate) => {
     return firestore()

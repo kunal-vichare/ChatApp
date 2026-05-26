@@ -42,7 +42,9 @@ const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage }) => {
                     style={styles.textContainer}
                     onPress={() => navigation.navigate('AppStack', {
                         screen: 'ProfileScreen',
-                        params: { userData: userData },
+                        params: isGroup
+                            ? { isGroup: true, chatroomId }
+                            : { isGroup: false, userData },
                     })}
                 >
                     <Image source={isGroup ? { uri: groupImage } : { uri: userData?.profileImage }} style={styles.img} />

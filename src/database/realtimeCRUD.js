@@ -125,3 +125,26 @@ export const subscribeToChatList = (myUid, setChatList, setLoading) => {
     unsubscribers.push(unsubscribeChats);
     return () => unsubscribers.forEach(unsub => unsub());
 };
+
+export const subscribeToGroupInfo = (chatroomId,setGroupData,setMembers,setLoading) => {
+    const unsubscribe = firestore()
+            .collection('chats')
+            .doc(chatroomId)
+            .onSnapshot(async snap => {
+                const data = snap.data();
+                if (!data) return;
+
+                setGroupData(data);
+
+                // Fetch all members' user docs
+                const memberDocs = await Promise.all(
+                    data.participants.map(uid =>
+                        firestore().collection('users').doc(uid).get()
+                    )
+                );
+                setMembers(memberDocs.map(d => d.data()).filter(Boolean));
+                setLoading(false);
+            });
+
+        return () => unsubscribe();
+}
