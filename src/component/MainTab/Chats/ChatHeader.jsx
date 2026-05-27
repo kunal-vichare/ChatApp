@@ -5,14 +5,16 @@ import { colors, fontFamily, fontSize, fontWeight, iconSize, margin, padding } f
 import VectorIcon from '../../../utils/VectorIcons'
 import { formatWhatsAppLastSeen } from '../../../utils/GetTime'
 import { get_MemberCount, get_userInfo } from '../../../database/firestoreCRUD'
-import { Divider, Menu } from 'react-native-paper'
+import { Divider, Menu, RadioButton } from 'react-native-paper'
 import Theme1 from '../../../assets/image/theme1.jpg'
+import Theme2 from '../../../assets/image/theme2.jpg'
+import Theme3 from '../../../assets/image/theme3.jpg'
 
-const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage, setSearchVisible }) => {
+const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage, setSearchVisible,theme,setTheme }) => {
     const navigation = useNavigation();
     const [memberCount, setMemberCount] = useState(0);
-    const [visible, setVisible] = useState(false);
     const [userData, setUserData] = useState(null);
+    const [visible, setVisible] = useState(false);
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
@@ -24,6 +26,12 @@ const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage, setSea
         if (!userId) return;
         get_userInfo(userId, setUserData);
     }, [userId, isGroup, chatroomId]);
+
+    const themes = [
+        { id: 'first', image: Theme1 },
+        { id: 'second', image: Theme2 },
+        { id: 'third', image: Theme3 },
+    ];
 
     return (
         <View style={styles.container}>
@@ -137,10 +145,38 @@ const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage, setSea
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContainer}>
+                        <VectorIcon
+                            type="Entypo"
+                            name="cross"
+                            size={iconSize.titleXs}
+                            color={colors.secondary}
+                            style={styles.cancel}
+                            onPress={() => setShowModal(false)}
+                        />
+                        <Text style={styles.selectText}>Select Theme</Text>
                         <View style={styles.imageContainer}>
-                            <Image source={Theme1} resizeMethod='contain' style={{height:100,width:50}} />
-                            <Image source={Theme1} resizeMethod='contain' style={{height:100,width:50}} />
-                            <Image source={Theme1} resizeMethod='contain' style={{height:100,width:50}} />
+                            {themes.map((item) => (
+                                <TouchableOpacity
+                                    key={item.id}
+                                    style={styles.themeCard}
+                                    onPress={() => setTheme(item.id)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Image
+                                        source={item.image}
+                                        style={styles.themeImg}
+                                        resizeMode="cover"
+                                    />
+
+                                    <View style={styles.radioContainer}>
+                                        <RadioButton
+                                            value={item.id}
+                                            status={theme === item.id ? 'checked' : 'unchecked'}
+                                            onPress={() => setTheme(item.id)}
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
                         </View>
 
                         <TouchableOpacity
@@ -217,7 +253,10 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 20,
     },
-
+    selectText: {
+        fontWeight: fontWeight.bold,
+        marginBottom: 10
+    },
     imageContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -234,6 +273,30 @@ const styles = StyleSheet.create({
     buttonText: {
         color: colors.primary,
         fontWeight: 'bold',
-    }
+    },
+    cancel: {
+        position: 'absolute',
+        right: 10,
+        top: 5
+    },
+
+    themeCard: {
+        width: '30%',
+        position: 'relative',
+    },
+
+    themeImg: {
+        height: 180,
+        width: '100%',
+        borderRadius: 10,
+    },
+
+    radioContainer: {
+        position: 'absolute',
+        top: 5,
+        right: 5,
+        backgroundColor: 'white',
+        borderRadius: 20,
+    },
 })
 export default ChatHeader

@@ -7,6 +7,9 @@ import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
 import { subscribeToChatInfo } from '../../database/firestoreCRUD'
 import VectorIcon from '../../utils/VectorIcons'
+import Theme1 from '../../assets/image/theme1.jpg'
+import Theme2 from '../../assets/image/theme2.jpg'
+import Theme3 from '../../assets/image/theme3.jpg'
 
 const Chat = () => {
   const route = useRoute();
@@ -17,6 +20,7 @@ const Chat = () => {
   const [replyTo, setReplyTo] = useState(null);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchValue,setSearchValue]=useState("");
+  const [theme, setTheme] = useState('first');
   const { chatroomId, otherUserId } = route.params;
 
   // Fetch chat metadata from Firestore
@@ -58,10 +62,10 @@ const Chat = () => {
             />
           </View>
           :
-          <ChatHeader userId={otherUserId} isGroup={chatInfo?.isGroup} groupName={chatInfo?.groupName} groupImage={chatInfo?.groupImage} chatroomId={chatroomId} setSearchVisible={setSearchVisible} />
+          <ChatHeader userId={otherUserId} isGroup={chatInfo?.isGroup} groupName={chatInfo?.groupName} groupImage={chatInfo?.groupImage} chatroomId={chatroomId} setSearchVisible={setSearchVisible} theme={theme} setTheme={setTheme}/>
       }
 
-      <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
+      <ImageBackground source={theme==='first' ? Theme1 : theme==='second' ? Theme2 : theme==='third' ? Theme3 : WpWallpaper} style={styles.wpWallpaper}>
         <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId} localMessages={localMessages} replyTo={replyTo} setReplyTo={setReplyTo} searchValue={searchValue}
         />
         {
