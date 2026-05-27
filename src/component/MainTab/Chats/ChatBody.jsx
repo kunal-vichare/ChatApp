@@ -7,7 +7,7 @@ import { formatTimestamp } from '../../../utils/GetTime';
 import { Loader } from '../../../component/MainTab/Chats';
 import { getChatDaySeparator } from '../../../utils/GetTime'
 import { getStatusIcon } from '../../../utils/GetStatusIcon';
-import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus, addReaction } from '../../../database/firestoreCRUD';
+import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus, addReaction, getUserName } from '../../../database/firestoreCRUD';
 import { FailedMessage, ReactionDisplay, ReactionPicker, SwipeableMessage } from '../../../component/MainTab/Chats';
 import LinkPreview from 'react-native-preview-url';
 
@@ -24,7 +24,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     const [reactionTarget, setReactionTarget] = useState(null);
 
     const myUid = useSelector(state => state.auth.user.uid);
-    const myName = useSelector((state) => state.auth.user.name);
+    const myName = getUserName(myUid);
 
     const allMessages = [
         ...new Map(

@@ -496,10 +496,10 @@ export const get_userInfo = async (userId, setUserData) => {
         });
 }
 
-export const getUserName = async(user) => {
+export const getUserName = async(myUid) => {
     const userDoc = await firestore()
     .collection('users')
-    .doc(user.uid)
+    .doc(myUid)
     .get();
     const firestoreName = userDoc.data()?.name || ''
     return firestoreName;

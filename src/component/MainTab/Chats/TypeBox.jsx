@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { colors } from '../../../constant';
 import VectorIcon from '../../../utils/VectorIcons';
-import { resetUnreadCount, sendMessage, setTypingStatus } from '../../../database/firestoreCRUD'
+import { getUserName, resetUnreadCount, sendMessage, setTypingStatus } from '../../../database/firestoreCRUD'
 import { useSelector } from 'react-redux';
 
 const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, onRemoveLocalMessage, onFail, replyTo, setReplyTo,participants, isGroup }) => {
@@ -12,8 +12,8 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const data = useSelector(state => state.auth);
-  const myName = useSelector(state => state.auth.user.name);
   const myUid = useSelector(state => state.auth.user.uid);
+  const myName = getUserName(myUid);
   const typingTimeoutRef = useRef(null);
 
   const receiverIds = isGroup
@@ -102,7 +102,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
       };
       await updateTypingStatus(false);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       onFail?.(tempId, msgText);
     } finally {
       setIsSending(false);
