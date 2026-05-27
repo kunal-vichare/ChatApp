@@ -6,12 +6,14 @@ import Footer from '../../component/Authentication/Footer'
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../services/auth';
 import { setLoginUser } from '../../redux/slice/auth'
-import firestore from '@react-native-firebase/firestore';
 import { EmailNotVerifiedToast, FillAllFieldToast, LoginSuccessToast } from '../../utils/ToastMsg';
+import { getUserName, setOnline } from '../../database/firestoreCRUD';
 
 const Login = () => {
     const dispatch = useDispatch();
     const userRedux = useSelector((state) => state.auth.user);
+    console.log('userRedux',userRedux);
+    
     const [login, setLogin] = useState({
         email: '',
         password: ''
@@ -33,13 +35,12 @@ const Login = () => {
                     email: '',
                     password: ''
                 })
-                const userDoc = await firestore().collection('users').doc(user.uid).get();
-                const firestoreName = userDoc.data()?.name || '';
                 dispatch(setLoginUser({
                     uid: user.uid,
                     email: user.email,
-                    name: firestoreName,
+                    name: getUserName(user),
                 }));
+                setOnline(user.uid);
                 // console.log("User data: ",userRedux);
             } else {
                 EmailNotVerifiedToast();

@@ -7,7 +7,7 @@ import { Divider, Menu } from 'react-native-paper'
 import auth from '@react-native-firebase/auth'
 import { useDispatch, useSelector } from 'react-redux'
 import {toggleTheme} from '../../../redux/slice/darkMode'
-import firestore from '@react-native-firebase/firestore';
+import { setOffline } from '../../../database/firestoreCRUD'
 
 const Header = () => {
     // const [darkMode, setDarkMode] = useState(false);
@@ -18,13 +18,7 @@ const Header = () => {
     const handleLogout = async () => {
         try {
             await auth().signOut();
-            await firestore()
-                  .collection('users')
-                  .doc(myUid)
-                  .update({
-                    isOnline: false,
-                    lastSeen: Date.now(),
-                  });  
+            setOffline(myUid);
         } catch (error) {
             console.log(error); 
         }

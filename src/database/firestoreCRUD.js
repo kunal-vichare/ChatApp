@@ -1,4 +1,5 @@
 import firestore from '@react-native-firebase/firestore';
+import { formatTimestamp } from '../utils/GetTime'
 export const addUserData = async (user) => {
     try {
         await firestore().collection('users').doc(user.uid).set({
@@ -320,9 +321,9 @@ export const createGroupChat = async (myUid, memberUids, groupName) => {
         groupAdmin: myUid,
         participants: allParticipants,
         lastMessage: '',
-        description:'Dream big, live bigger.',
+        description: 'Dream big, live bigger.',
         updatedAt: Date.now(),
-        groupImage:'https://cdn-icons-png.flaticon.com/256/8184/8184182.png',
+        groupImage: 'https://cdn-icons-png.flaticon.com/256/8184/8184182.png',
         unreadCount: allParticipants.reduce((acc, uid) => {
             acc[uid] = 0;
             return acc;
@@ -354,3 +355,152 @@ export const subscribeToChatInfo = (chatroomId, onUpdate) => {
             }
         });
 };
+
+export const subscribeToChatList = (myUid, setChatList, setLoading) => {
+    const unsubscribers = [];
+
+    const unsubscribeChats = firestore()
+        .collection('chats')
+        .where('participants', 'array-contains', myUid)
+        .onSnapshot(snapshot => {
+
+            if (snapshot.empty) {
+                setLoading(false);
+                return;
+            }
+
+            snapshot.docs.forEach(chatDoc => {
+                const data = chatDoc.data();
+                const chatId = chatDoc.id;
+
+                if (data.isGroup) {
+                    setChatList(prev => {
+                        const existingIndex = prev.findIndex(c => c.chatId === chatId);
+                        const updatedChat = {
+                            chatId,
+                            isGroup: true,
+                            name: data.groupName || 'Group',
+                            profileImage: data.groupImage || '',
+                            lastMessage: data.lastMessage || '',
+                            lastMessageStatus: data.lastMessageStatus || '',
+                            lastMessageSenderId: data.lastMessageSenderId || '',
+                            updatedAt: formatTimestamp(data.updatedAt),
+                            unreadCount: data.unreadCount?.[myUid] || 0,
+                            typing: data.typing || {},
+                        };
+                        if (existingIndex !== -1) {
+                            const updated = [...prev];
+                            updated[existingIndex] = updatedChat;
+                            return updated;
+                        }
+                        return [...prev, updatedChat];
+                    });
+                    setLoading(false);
+
+                } else {
+                    const otherUid = data.participants.find(uid => uid !== myUid);
+
+                    const unsubscribeUser = firestore()
+                        .collection('users')
+                        .doc(otherUid)
+                        .onSnapshot(userDoc => {
+                            const userData = userDoc.data();
+                            setChatList(prev => {
+                                const existingIndex = prev.findIndex(c => c.chatId === chatId);
+                                const updatedChat = {
+                                    chatId,
+                                    isGroup: false,
+                                    id: userData?.uid,
+                                    name: userData?.name,
+                                    profileImage: userData?.profileImage,
+                                    lastSeen: userData?.lastSeen,
+                                    isOnline: userData?.isOnline,
+                                    lastMessage: data.lastMessage || '',
+                                    lastMessageStatus: data.lastMessageStatus || '',
+                                    lastMessageSenderId: data.lastMessageSenderId || '',
+                                    typing: data.typing || {},
+                                    updatedAt: formatTimestamp(data.updatedAt),
+                                    unreadCount: data.unreadCount?.[myUid] || 0,
+                                };
+                                if (existingIndex !== -1) {
+                                    const updated = [...prev];
+                                    updated[existingIndex] = updatedChat;
+                                    return updated;
+                                }
+                                return [...prev, updatedChat];
+                            });
+                            setLoading(false);
+                        });
+
+                    unsubscribers.push(unsubscribeUser);
+                }
+            });
+        });
+
+    unsubscribers.push(unsubscribeChats);
+    return () => unsubscribers.forEach(unsub => unsub());
+};
+
+export const subscribeToGroupInfo = (chatroomId, setGroupData, setMembers, setLoading) => {
+    const unsubscribe = firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .onSnapshot(async snap => {
+            const data = snap.data();
+            if (!data) return;
+
+            setGroupData(data);
+
+            // Fetch all members' user docs
+            const memberDocs = await Promise.all(
+                data.participants.map(uid =>
+                    firestore().collection('users').doc(uid).get()
+                )
+            );
+            setMembers(memberDocs.map(d => d.data()).filter(Boolean));
+            setLoading(false);
+        });
+
+    return () => unsubscribe();
+}
+
+export const setOffline = async (myUid) => {
+    await firestore()
+        .collection('users')
+        .doc(myUid)
+        .update({
+            isOnline: false,
+            lastSeen: Date.now(),
+        });
+}
+export const setOnline = async (myUid) => {
+    await firestore()
+        .collection('users')
+        .doc(myUid)
+        .update({
+            isOnline: true
+        });
+}
+export const get_MemberCount = async (chatroomId, setMemberCount) => {
+    return firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .onSnapshot(snap => {
+            setMemberCount(snap.data()?.participants?.length || 0);
+        });
+}
+export const get_userInfo = async (userId, setUserData) => {
+    return firestore().collection('users').doc(userId)
+        .onSnapshot(snap => {
+            if (snap?.data()) setUserData(snap?.data());
+        });
+}
+
+export const getUserName = async(user) => {
+    const userDoc = await firestore()
+    .collection('users')
+    .doc(user.uid)
+    .get();
+    const firestoreName = userDoc.data()?.name || ''
+    return firestoreName;
+}

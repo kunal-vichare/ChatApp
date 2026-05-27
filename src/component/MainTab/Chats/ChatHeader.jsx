@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { colors, fontFamily, fontSize, fontWeight, iconSize, margin, padding } from '../../../constant'
 import VectorIcon from '../../../utils/VectorIcons'
-import firestore from '@react-native-firebase/firestore';
 import { formatWhatsAppLastSeen } from '../../../utils/GetTime'
+import { get_MemberCount, get_userInfo } from '../../../database/firestoreCRUD'
 
 const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage }) => {
     const navigation = useNavigation();
@@ -14,17 +14,11 @@ const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage }) => {
     useEffect(() => {
         if (isGroup) {
             // Listen to group doc for member count
-            return firestore().collection('chats').doc(chatroomId)
-                .onSnapshot(snap => {
-                    setMemberCount(snap.data()?.participants?.length || 0);
-                });
+            get_MemberCount(chatroomId, setMemberCount);
         }
-        // existing 1-on-1 listener
+        // for 1 on 1 chat
         if (!userId) return;
-        return firestore().collection('users').doc(userId)
-            .onSnapshot(snap => {
-                if (snap?.data()) setUserData(snap.data());
-            });
+        get_userInfo(userId, setUserData);
     }, [userId, isGroup, chatroomId]);
 
     return (
@@ -107,8 +101,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center'
     },
-    textInnerContainer:{
-        marginLeft:10
+    textInnerContainer: {
+        marginLeft: 10
     },
     secondContainer: {
         flexDirection: 'row',

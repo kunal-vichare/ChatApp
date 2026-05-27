@@ -9,9 +9,8 @@ import { formatTimestamp } from '../../../utils/GetTime'
 import VectorIcon from '../../../utils/VectorIcons'
 import { Loader } from '../../../component/MainTab/Chats'
 import useColors from '../../../hook/useColors'
-import { markAllDelivered } from '../../../database/firestoreCRUD'
+import { markAllDelivered,subscribeToChatList } from '../../../database/firestoreCRUD'
 import { useFocusEffect } from '@react-navigation/native'
-import {subscribeToChatList} from '../../../database/realtimeCRUD'
 
 const Chatlist = ({ search }) => {
   const colors = useColors();

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import VectorIcon from '../../utils/VectorIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { formatWhatsAppLastSeen } from '../../utils/GetTime';
-import { subscribeToGroupInfo } from '../../database/realtimeCRUD';
+import { subscribeToGroupInfo } from '../../database/firestoreCRUD';
 import { colors, fontSize } from '../../constant';
 import { useSelector } from 'react-redux';
 
