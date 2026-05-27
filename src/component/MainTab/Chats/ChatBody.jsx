@@ -11,7 +11,7 @@ import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, 
 import { FailedMessage, ReactionDisplay, ReactionPicker, SwipeableMessage } from '../../../component/MainTab/Chats';
 import LinkPreview from 'react-native-preview-url';
 
-const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages, replyTo, setReplyTo, searchValue}) => {
+const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages, replyTo, setReplyTo, searchValue }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [lastDoc, setLastDoc] = useState(null);
@@ -33,9 +33,9 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     ];
 
     const MatchFound = allMessages.filter(item =>
-    item?.text?.toLowerCase().includes(searchValue?.toLowerCase() || '')
+        item?.text?.toLowerCase().includes(searchValue?.toLowerCase() || '')
     );
-    
+
     const flatListRef = useRef(null);
     const PAGE_SIZE = 10;
 

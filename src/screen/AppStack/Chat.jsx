@@ -20,7 +20,7 @@ const Chat = () => {
   const [replyTo, setReplyTo] = useState(null);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchValue,setSearchValue]=useState("");
-  const [theme, setTheme] = useState('first');
+  const [theme, setTheme] = useState();
   const { chatroomId, otherUserId } = route.params;
 
   // Fetch chat metadata from Firestore

@@ -66,14 +66,14 @@ const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage, setSea
             </View>
             <View style={styles.secondContainer}>
                 <VectorIcon
-                    type="Ionicons"
-                    name="videocam"
+                    type="Feather"
+                    name="video"
                     size={iconSize.xxl}
                     color={colors.primary}
                 />
                 <VectorIcon
-                    type="FontAwesome5"
-                    name="phone-alt"
+                    type="MaterialDesignIcons"
+                    name="phone"
                     size={iconSize.xxl}
                     color={colors.primary}
                 />
