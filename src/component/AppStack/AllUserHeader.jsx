@@ -13,7 +13,7 @@ const AllUserHeader = ({length,setIsSelectionMode,isSelectionMode,setSelectedIds
           name="arrow-back"
           type="Ionicons"
           size={24}
-          color={colors.white}
+          color={colors.secondary}
           onPress={() => navigation.goBack()}
         />
         <View>

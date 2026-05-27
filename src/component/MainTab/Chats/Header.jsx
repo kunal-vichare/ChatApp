@@ -116,7 +116,6 @@ const styles = StyleSheet.create({
     },
     switchText: {
         fontSize: 16,
-        color: colors.bp,
     },
     darkModeRow: {
         flexDirection: 'row',

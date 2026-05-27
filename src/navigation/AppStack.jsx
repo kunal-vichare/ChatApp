@@ -21,6 +21,7 @@ const AppStack = () => {
             component={Chat}
             options={()=>({
                 headerShown:false,
+                cardStyle:{backgroundColor:colors.primary}
             })}
         />
         <Stack.Screen 

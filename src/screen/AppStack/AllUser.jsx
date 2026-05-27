@@ -10,6 +10,7 @@ import VectorIcon from '../../utils/VectorIcons';
 import { Divider } from 'react-native-paper';
 import { createGroupChat } from '../../database/firestoreCRUD'
 import { useNavigation } from '@react-navigation/native';
+import { EmptyGroupNameErrorToast, GroupCreateErrorToast } from '../../utils/ToastMsg';
 
 const AllUser = () => {
   const navigation =useNavigation();
@@ -52,7 +53,7 @@ const AllUser = () => {
 
   const handleCreateGroup = async () => {
     if (selectedIds.length < 2) {
-      Alert.alert('Select at least 2 members');
+      GroupCreateErrorToast();
       return;
     }
     setShowNameInput(true);
@@ -60,7 +61,7 @@ const AllUser = () => {
 
   const confirmCreateGroup = async () => {
     if (!groupName.trim()) {
-      Alert.alert('Enter a group name');
+      EmptyGroupNameErrorToast();
       return;
     }
     const memberUids = users

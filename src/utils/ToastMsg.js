@@ -69,3 +69,16 @@ export const fillEmailToast = () => {
     text1: 'Please enter your email address'
   });
 };
+
+export const GroupCreateErrorToast = () => {
+  Toast.show({
+    type: 'error',
+    text1: 'Select at least 2 members'
+  });
+};
+export const EmptyGroupNameErrorToast = () => {
+  Toast.show({
+    type: 'error',
+    text1: 'Please Enter a group name'
+  });
+};

@@ -1,40 +1,69 @@
-import { View, Text, StatusBar, ImageBackground, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, StatusBar, ImageBackground, StyleSheet, ActivityIndicator, TextInput } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { ChatHeader, FlatList, TypeBox, ChatBody } from '../../component/MainTab/Chats'
-import { colors } from '../../constant'
+import { colors, padding } from '../../constant'
 import WpWallpaper from '../../assets/image/wpBackground.png'
 import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
-import {subscribeToChatInfo} from '../../database/firestoreCRUD'
+import { subscribeToChatInfo } from '../../database/firestoreCRUD'
+import VectorIcon from '../../utils/VectorIcons'
 
 const Chat = () => {
   const route = useRoute();
   const [previewUrl, setPreviewUrl] = useState('');
   const [failedMessages, setFailedMessages] = useState([]);
-  const [localMessages, setLocalMessages]   = useState([]);
-  const [replyTo, setReplyTo] = useState(null);
+  const [localMessages, setLocalMessages] = useState([]);
   const [chatInfo, setChatInfo] = useState(null);
-
+  const [replyTo, setReplyTo] = useState(null);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchValue,setSearchValue]=useState("");
   const { chatroomId, otherUserId } = route.params;
-  // const { chatroomId, otherUserId, isGroup, groupName } = route.params;
 
   // Fetch chat metadata from Firestore
-useEffect(() => {
+  useEffect(() => {
     if (!chatroomId) return;
     const unsubscribe = subscribeToChatInfo(chatroomId, setChatInfo);
     return () => unsubscribe();
-}, [chatroomId]);
+  }, [chatroomId]);
 
   return (
     <View style={{ flex: 1 }}>
       <StatusBar
-        backgroundColor={colors.headerBack}
-        barStyle="light-content"
+        backgroundColor={searchVisible ? colors.primary : colors.headerBack}
+        barStyle={searchVisible ? 'dark-content' : "light-content"}
       />
-      <ChatHeader userId={otherUserId} isGroup={chatInfo?.isGroup} groupName={chatInfo?.groupName} groupImage={chatInfo?.groupImage} chatroomId={chatroomId}/>
+      {
+        searchVisible ?
+          <View style={styles.textContainer}>
+            <VectorIcon
+              name="keyboard-backspace"
+              type="MaterialIcons"
+              size={24}
+              color={colors.secondary}
+              onPress={() => setSearchVisible(false)}
+              style={styles.icon}
+            />
+            <TextInput
+              placeholder="Search for chat..."
+              style={styles.textIp}
+              value={searchValue}
+              onChangeText={(val)=>setSearchValue(val)}
+            />
+            <VectorIcon
+              name="content-paste-search"
+              type="MaterialIcons"
+              size={24}
+              color={colors.secondary}
+              style={styles.icon}
+            />
+          </View>
+          :
+          <ChatHeader userId={otherUserId} isGroup={chatInfo?.isGroup} groupName={chatInfo?.groupName} groupImage={chatInfo?.groupImage} chatroomId={chatroomId} setSearchVisible={setSearchVisible} />
+      }
+
       <ImageBackground source={WpWallpaper} style={styles.wpWallpaper}>
-        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId} localMessages={localMessages} replyTo={replyTo} setReplyTo={setReplyTo}
-      />
+        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId} localMessages={localMessages} replyTo={replyTo} setReplyTo={setReplyTo} searchValue={searchValue}
+        />
         {
           previewUrl ? (
             <LinkPreview
@@ -81,34 +110,34 @@ useEffect(() => {
             />
           ) : null
         }
-      <TypeBox 
-        chatroomId={chatroomId} 
-        setPreviewUrl={setPreviewUrl} 
-        otherUserId={otherUserId} 
-        isGroup={chatInfo?.isGroup}
-        participants={chatInfo?.participants}
-        onAddLocalMessage={(msg) => {
-          setLocalMessages(prev => [msg, ...prev]);
-        }}
-        onRemoveLocalMessage={(tempId) => {
-          setLocalMessages(prev =>
-            prev.filter(m => m.id !== tempId)
-        );
-        }}
-        onFail={(tempId, text) => {
-        // Remove from local
-        setLocalMessages(prev =>
-            prev.filter(m => m.id !== tempId)
-        );
-        // Add to failed
-        setFailedMessages(prev => [
-            ...prev,
-            { id: tempId, text, timestamp: new Date() }
-        ]);
-      }}
-      replyTo={replyTo}
-      setReplyTo={setReplyTo}
-      />
+        <TypeBox
+          chatroomId={chatroomId}
+          setPreviewUrl={setPreviewUrl}
+          otherUserId={otherUserId}
+          isGroup={chatInfo?.isGroup}
+          participants={chatInfo?.participants}
+          onAddLocalMessage={(msg) => {
+            setLocalMessages(prev => [msg, ...prev]);
+          }}
+          onRemoveLocalMessage={(tempId) => {
+            setLocalMessages(prev =>
+              prev.filter(m => m.id !== tempId)
+            );
+          }}
+          onFail={(tempId, text) => {
+            // Remove from local
+            setLocalMessages(prev =>
+              prev.filter(m => m.id !== tempId)
+            );
+            // Add to failed
+            setFailedMessages(prev => [
+              ...prev,
+              { id: tempId, text, timestamp: new Date() }
+            ]);
+          }}
+          replyTo={replyTo}
+          setReplyTo={setReplyTo}
+        />
       </ImageBackground>
     </View>
   )
@@ -118,6 +147,21 @@ const styles = StyleSheet.create({
   wpWallpaper: {
     flex: 1,
     resizeMode: 'contain'
+  },
+  textContainer: {
+    backgroundColor: '#ece5dd',
+    flexDirection: 'row',
+    padding: 5,
+    alignItems: 'center',
+    margin:8,
+    borderRadius:20
+  },
+  textIp: {
+    flex: 1,
+    paddingLeft: 5
+  },
+  icon:{
+    paddingHorizontal:10
   }
 })
 
