@@ -504,3 +504,28 @@ export const getUserName = async(user) => {
     const firestoreName = userDoc.data()?.name || ''
     return firestoreName;
 }
+export const setTypingStatus = async(chatroomId,myUid,isTyping) => {
+    await firestore()
+        .collection('chats')
+        .doc(chatroomId)
+        .update({
+          [`typing.${myUid}`]: isTyping,
+        });
+}
+export const resetUnreadCount = async(chatroomId,myUid) => {
+    await firestore()
+            .collection('chats')
+            .doc(chatroomId)
+            .update({
+              [`unreadCount.${myUid}`]: 0,
+            })
+}
+export const setCurrentUserOffline = async(currentUser) => {
+                await firestore()
+                  .collection('users')
+                  .doc(currentUser.uid)
+                  .update({
+                    isOnline: false,
+                    lastSeen: Date.now(),
+                  });
+}

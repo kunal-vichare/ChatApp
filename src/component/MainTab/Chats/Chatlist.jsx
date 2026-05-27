@@ -1,16 +1,12 @@
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { FlatlistRender } from '.'
-import Lock from 'react-native-vector-icons/Fontisto'
 import { colors, fontFamily, fontWeight } from '../../../constant'
-import firestore from '@react-native-firebase/firestore';
 import { useSelector } from 'react-redux'
-import { formatTimestamp } from '../../../utils/GetTime'
 import VectorIcon from '../../../utils/VectorIcons'
 import { Loader } from '../../../component/MainTab/Chats'
 import useColors from '../../../hook/useColors'
 import { markAllDelivered,subscribeToChatList } from '../../../database/firestoreCRUD'
-import { useFocusEffect } from '@react-navigation/native'
 
 const Chatlist = ({ search }) => {
   const colors = useColors();

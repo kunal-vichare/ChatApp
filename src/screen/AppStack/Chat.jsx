@@ -6,7 +6,6 @@ import WpWallpaper from '../../assets/image/wpBackground.png'
 import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
 import {subscribeToChatInfo} from '../../database/firestoreCRUD'
-import firestore from '@react-native-firebase/firestore'
 
 const Chat = () => {
   const route = useRoute();

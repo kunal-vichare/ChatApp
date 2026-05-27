@@ -12,13 +12,12 @@ import { getUserName, setOnline } from '../../database/firestoreCRUD';
 const Login = () => {
     const dispatch = useDispatch();
     const userRedux = useSelector((state) => state.auth.user);
-    console.log('userRedux',userRedux);
+    // console.log('userRedux',userRedux);
     
     const [login, setLogin] = useState({
         email: '',
         password: ''
     });
-    // const myUid = useSelector(state=>state.auth.user.uid);
 
     const handleSignin = async () => {
         if (!login.email || !login.password) {
@@ -27,8 +26,6 @@ const Login = () => {
         }
         try {
             const { user, emailVerified } = await loginUser(login.email, login.password);
-            // console.log("emailVerified", emailVerified);
-
             if (emailVerified) {
                 LoginSuccessToast();
                 setLogin({
@@ -38,10 +35,9 @@ const Login = () => {
                 dispatch(setLoginUser({
                     uid: user.uid,
                     email: user.email,
-                    name: getUserName(user),
+                    // name: getUserName(user),
                 }));
                 setOnline(user.uid);
-                // console.log("User data: ",userRedux);
             } else {
                 EmailNotVerifiedToast();
             }

@@ -4,8 +4,7 @@ import {
 } from 'react-native';
 import { colors } from '../../../constant';
 import VectorIcon from '../../../utils/VectorIcons';
-import { sendMessage } from '../../../database/firestoreCRUD'
-import firestore from '@react-native-firebase/firestore';
+import { resetUnreadCount, sendMessage, setTypingStatus } from '../../../database/firestoreCRUD'
 import { useSelector } from 'react-redux';
 
 const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, onRemoveLocalMessage, onFail, replyTo, setReplyTo,participants, isGroup }) => {
@@ -23,12 +22,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
 
   const updateTypingStatus = async (isTyping) => {
     try {
-      await firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .update({
-          [`typing.${myUid}`]: isTyping,
-        });
+      setTypingStatus(chatroomId,myUid,isTyping);
     } catch (error) {
       console.log('typing update error:', error);
     }
@@ -61,12 +55,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
 
   useEffect(() => {
     const resetUnread = async () => {
-      await firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .update({
-          [`unreadCount.${myUid}`]: 0,
-        })
+      resetUnreadCount(chatroomId,myUid);
     }
     resetUnread();
   }, [myUid]);

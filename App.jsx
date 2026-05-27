@@ -7,10 +7,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { colors } from './src/constant';
 import auth from '@react-native-firebase/auth';
 import { setLoginUser, setLogoutUser } from './src/redux/slice/auth';
-import firestore from '@react-native-firebase/firestore';
 import BootSplash from 'react-native-bootsplash';
 import { Loader } from './src/component/MainTab/Chats';
-import {markAllDelivered} from './src/database/firestoreCRUD'
+import {getUserName, markAllDelivered, setCurrentUserOffline, setOffline, setOnline} from './src/database/firestoreCRUD'
 import Toast from 'react-native-toast-message';
 
 const App = () => {
@@ -26,19 +25,12 @@ const App = () => {
       
       try {
         if (user && user.emailVerified) {
-          const userDoc = await firestore()
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-          const firestoreName = userDoc.data()?.name || '';
-
           dispatch(
             setLoginUser({
               uid: user.uid,
               email: user.email,
               emailVerified: user.emailVerified,
-              name: firestoreName,
+              // name: getUserName(user),
             }),
           );
 
@@ -46,13 +38,7 @@ const App = () => {
           const currentUser = auth().currentUser;
 
           if (currentUser?.uid) {
-            await firestore()
-              .collection('users')
-              .doc(currentUser.uid)
-              .update({
-                isOnline: false,
-                lastSeen: Date.now(),
-              });
+            setCurrentUserOffline(currentUser);
           }
           dispatch(setLogoutUser());
         }
@@ -76,24 +62,13 @@ const App = () => {
         try {
           //app open in foreground
           if (nextAppState === 'active') {
-            await firestore()
-              .collection('users')
-              .doc(myUid)
-              .update({
-                isOnline: true,
-              });
+              setOnline(myUid);
               await markAllDelivered(myUid);
           }
 
           //app in background/close/inactive
           else {
-            await firestore()
-              .collection('users')
-              .doc(myUid)
-              .update({
-                isOnline: false,
-                lastSeen: Date.now(),
-              });
+              setOffline(myUid);
           }
         } catch (error) {
           console.log('AppState update error:', error);
