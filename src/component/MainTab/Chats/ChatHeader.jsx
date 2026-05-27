@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native'
 import { colors, fontFamily, fontSize, fontWeight, iconSize, margin, padding } from '../../../constant'
 import VectorIcon from '../../../utils/VectorIcons'
 import { formatWhatsAppLastSeen } from '../../../utils/GetTime'
-import { get_MemberCount, get_userInfo } from '../../../database/firestoreCRUD'
+import { clearChat, get_MemberCount, get_userInfo } from '../../../database/firestoreCRUD'
 import { Divider, Menu, RadioButton } from 'react-native-paper'
 import Theme1 from '../../../assets/image/theme1.jpg'
 import Theme2 from '../../../assets/image/theme2.jpg'
@@ -125,7 +125,7 @@ const ChatHeader = ({ userId, isGroup, groupName, chatroomId, groupImage, setSea
                         title="Chat theme"
                     />
                     <Menu.Item
-                        onPress={() => { setVisible(false) }}
+                        onPress={() => { clearChat(chatroomId);setVisible(false) }}
                         leadingIcon="format-clear"
                         title="Clear chat"
                     />

@@ -496,36 +496,46 @@ export const get_userInfo = async (userId, setUserData) => {
         });
 }
 
-export const getUserName = async(myUid) => {
+export const getUserName = async (myUid) => {
     const userDoc = await firestore()
-    .collection('users')
-    .doc(myUid)
-    .get();
+        .collection('users')
+        .doc(myUid)
+        .get();
     const firestoreName = userDoc.data()?.name || ''
     return firestoreName;
 }
-export const setTypingStatus = async(chatroomId,myUid,isTyping) => {
+export const setTypingStatus = async (chatroomId, myUid, isTyping) => {
     await firestore()
         .collection('chats')
         .doc(chatroomId)
         .update({
-          [`typing.${myUid}`]: isTyping,
+            [`typing.${myUid}`]: isTyping,
         });
 }
-export const resetUnreadCount = async(chatroomId,myUid) => {
+export const resetUnreadCount = async (chatroomId, myUid) => {
     await firestore()
-            .collection('chats')
-            .doc(chatroomId)
-            .update({
-              [`unreadCount.${myUid}`]: 0,
-            })
+        .collection('chats')
+        .doc(chatroomId)
+        .update({
+            [`unreadCount.${myUid}`]: 0,
+        })
 }
-export const setCurrentUserOffline = async(currentUser) => {
-                await firestore()
-                  .collection('users')
-                  .doc(currentUser.uid)
-                  .update({
-                    isOnline: false,
-                    lastSeen: Date.now(),
-                  });
+export const setCurrentUserOffline = async (currentUser) => {
+    await firestore()
+        .collection('users')
+        .doc(currentUser.uid)
+        .update({
+            isOnline: false,
+            lastSeen: Date.now(),
+        });
 }
+export const clearChat = async (chatroomId) => {
+    const messages = await firestore()
+        .collection('chats').doc(chatroomId)
+        .collection('messages').get();
+    const batch = firestore().batch();
+    messages.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    await firestore().collection('chats').doc(chatroomId)
+        .update({ lastMessage: '', updatedAt: Date.now(),lastMessageStatus:'',unreadCount:null,lastMessageSenderId:'' });
+};
