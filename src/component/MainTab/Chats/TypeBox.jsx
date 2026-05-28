@@ -12,8 +12,11 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
   const [isSending, setIsSending] = useState(false);
   const data = useSelector(state => state.auth);
   const myUid = useSelector(state => state.auth.user.uid);
-  const myName = getUserName(myUid);
+  const [myName, setMyName] = useState('');
   const typingTimeoutRef = useRef(null);
+  useEffect(() => {
+      getUserName(myUid).then(name => setMyName(name || ''));
+  }, [myUid]);
 
   const receiverIds = isGroup
     ? (participants || []).filter(uid => uid !== myUid)

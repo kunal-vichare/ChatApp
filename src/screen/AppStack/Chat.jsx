@@ -280,25 +280,32 @@ const styles = StyleSheet.create({
   icon: {
     paddingHorizontal: 10
   },
-  mainContainer: {
-    // flex:1,
-    flexDirection: 'row',
-    gap: 20,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  leftContainer: {
-    flexDirection: 'row',
-    gap: 20
-  },
-  rightContainer: {
-    flexDirection: 'row',
-    gap: 15
-  },
+mainContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingVertical: 10,
+  paddingHorizontal: 8,
+  minHeight: 52,
+},
+leftContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 16,
+  flex: 1,
+  flexShrink: 1,
+},
+rightContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+  flexShrink: 0,
+  paddingLeft: 8,
+},
   selectionCountText: {
-    marginRight: 40,
-    fontSize: fontSize.regular,
-    fontWeight: fontWeight.highlight
+  fontSize: fontSize.regular,
+  fontWeight: fontWeight.highlight,
+  flexShrink: 1,
   }
 })
 

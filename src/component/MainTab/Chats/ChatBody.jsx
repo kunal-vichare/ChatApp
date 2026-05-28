@@ -21,10 +21,12 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     const [retrying, setRetrying] = useState(false);
     const [otherUserName, setOtherUserName] = useState('');
     const [otherUserTyping, setOtherUserTyping] = useState(false);
-    
+    const [myName,setMyName] = useState('');
 
     const myUid = useSelector(state => state.auth.user.uid);
-    const myName = getUserName(myUid);
+    useEffect(() => {
+        getUserName(myUid).then(name => setMyName(name || ''));
+    }, [myUid]);
 
     const allMessages = [
         ...new Map(
@@ -415,7 +417,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
             <ReactionPicker
                 visible={reactionTarget !== null}
                 onSelect={handleReaction}
-                onClose={() => setReactionTargetsetReactionTarget(null)}
+                onClose={() => setReactionTarget(null)}
             />
         </View>
 
