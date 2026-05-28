@@ -11,7 +11,7 @@ import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, 
 import { FailedMessage, ReactionDisplay, ReactionPicker, SwipeableMessage } from '../../../component/MainTab/Chats';
 import LinkPreview from 'react-native-preview-url';
 
-const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages, replyTo, setReplyTo, searchValue }) => {
+const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages, replyTo, setReplyTo, searchValue,setOptionVisible,reactionTarget,setReactionTarget,setSelectedMsg }) => {
     const [loading, setLoading] = useState(false);
     const [messages, setMessages] = useState([]);
     const [lastDoc, setLastDoc] = useState(null);
@@ -21,7 +21,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     const [retrying, setRetrying] = useState(false);
     const [otherUserName, setOtherUserName] = useState('');
     const [otherUserTyping, setOtherUserTyping] = useState(false);
-    const [reactionTarget, setReactionTarget] = useState(null);
+    
 
     const myUid = useSelector(state => state.auth.user.uid);
     const myName = getUserName(myUid);
@@ -145,11 +145,11 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         }
     };
 
-    const UserMessageView = memo(({ message, time, isFirst, status, reactions, messageId, replyTo, urlPreview }) => (
+    const UserMessageView = memo(({ message, time, isFirst, status, reactions, messageId, replyTo, urlPreview,item }) => (
         <View style={styles.userContainer}>
             <View style={styles.userBubbleWrapper}>
                 <TouchableOpacity
-                    onLongPress={() => setReactionTarget(messageId)}
+                    onLongPress={() => {setReactionTarget(messageId);setOptionVisible(true);setSelectedMsg(item)}}
                     activeOpacity={0.8}
                     style={styles.btn}
                 >
@@ -204,11 +204,11 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         </View>
     ));
 
-    const OtherUserMessageView = memo(({ message, time, senderName, isFirst, reactions, messageId, replyTo, urlPreview }) => (
+    const OtherUserMessageView = memo(({ message, time, senderName, isFirst, reactions, messageId, replyTo, urlPreview,item}) => (
         <View style={styles.otherUserContainer}>
             <View style={styles.otherBubbleWrapper}>
                 <TouchableOpacity
-                    onLongPress={() => setReactionTarget(messageId)}
+                    onLongPress={() => {setReactionTarget(messageId);setOptionVisible(true);setSelectedMsg(item)}}
                     activeOpacity={0.8}
                     style={styles.btn}
                 >
@@ -289,6 +289,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                             messageId={item.id}
                             replyTo={item.replyTo || null}
                             urlPreview={item.urlPreview || null}
+                            item={item}
                         />
                     ) : (
                         <OtherUserMessageView
@@ -300,6 +301,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                             messageId={item.id}
                             replyTo={item.replyTo || null}
                             urlPreview={item.urlPreview || null}
+                            item={item}
                         />
                     )}
                 </SwipeableMessage>
@@ -325,15 +327,17 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                         contentContainerStyle={styles.flatlistContent}
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyText}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <VectorIcon
                                         type="Fontisto"
                                         name='locked'
                                         size={13}
                                         color={colors.textGrey}
                                     />
-                                    {"\u00A0"} Message and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. <Text style={{ color: 'blue', textDecorationLine: 'underline' }}>Team ChatMate</Text>
-                                </Text>
+                                    <Text style={styles.emptyText}>
+                                    {"\u00A0"} Message and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. <Text style={{ color: 'blue', textDecorationLine: 'underline' }}>Team ChatMate</Text>   
+                                    </Text>
+                                </View>
                             </View>
                         }
                         inverted
@@ -411,7 +415,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
             <ReactionPicker
                 visible={reactionTarget !== null}
                 onSelect={handleReaction}
-                onClose={() => setReactionTarget(null)}
+                onClose={() => setReactionTargetsetReactionTarget(null)}
             />
         </View>
 

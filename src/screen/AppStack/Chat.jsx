@@ -1,7 +1,7 @@
-import { View, Text, StatusBar, ImageBackground, StyleSheet, ActivityIndicator, TextInput } from 'react-native'
+import { View, Text, StatusBar, ImageBackground, StyleSheet, ActivityIndicator, TextInput, Alert } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { ChatHeader, FlatList, TypeBox, ChatBody } from '../../component/MainTab/Chats'
-import { colors, padding } from '../../constant'
+import { colors, fontSize, fontWeight, padding } from '../../constant'
 import WpWallpaper from '../../assets/image/wpBackground.png'
 import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
@@ -19,8 +19,11 @@ const Chat = () => {
   const [chatInfo, setChatInfo] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const [searchVisible, setSearchVisible] = useState(false);
-  const [searchValue,setSearchValue]=useState("");
+  const [searchValue, setSearchValue] = useState("");
   const [theme, setTheme] = useState();
+  const [reactionTarget, setReactionTarget] = useState(null);
+  const [optionVisible, setOptionVisible] = useState(false);
+  const [selectedMsg, setSelectedMsg] = useState(null);
   const { chatroomId, otherUserId } = route.params;
 
   // Fetch chat metadata from Firestore
@@ -33,40 +36,114 @@ const Chat = () => {
   return (
     <View style={{ flex: 1 }}>
       <StatusBar
-        backgroundColor={searchVisible ? colors.primary : colors.headerBack}
-        barStyle={searchVisible ? 'dark-content' : "light-content"}
+        backgroundColor={searchVisible || optionVisible ? colors.primary : colors.headerBack}
+        barStyle={searchVisible || optionVisible ? 'dark-content' : "light-content"}
       />
       {
-        searchVisible ?
-          <View style={styles.textContainer}>
-            <VectorIcon
-              name="keyboard-backspace"
-              type="MaterialIcons"
-              size={24}
-              color={colors.secondary}
-              onPress={() => setSearchVisible(false)}
-              style={styles.icon}
-            />
-            <TextInput
-              placeholder="Search for chat..."
-              style={styles.textIp}
-              value={searchValue}
-              onChangeText={(val)=>setSearchValue(val)}
-            />
-            <VectorIcon
-              name="content-paste-search"
-              type="MaterialIcons"
-              size={24}
-              color={colors.secondary}
-              style={styles.icon}
-            />
+        optionVisible ?
+          <View style={styles.mainContainer}>
+            <View style={styles.leftContainer}>
+              <VectorIcon
+                name="arrow-back"
+                type="Ionicons"
+                size={24}
+                color={colors.secondary}
+                onPress={() => { setOptionVisible(false); setReactionTarget(null) }}
+                style={styles.icon}
+              />
+              <Text style={styles.selectionCountText}>1</Text>
+            </View>
+            <View style={styles.rightContainer}>
+              <VectorIcon
+                name="reply"
+                type="Octicons"
+                size={24}
+                color={colors.secondary}
+                onPress={() => { setReplyTo(selectedMsg); setReactionTarget(null) }}
+                style={styles.icon}
+              />
+              <VectorIcon
+                name="star-outline"
+                type="Ionicons"
+                size={24}
+                color={colors.secondary}
+                // onPress={() => setSearchVisible(false)}
+                style={styles.icon}
+              />
+              <VectorIcon
+                name="delete-outline"
+                type="MaterialDesignIcons"
+                size={24}
+                color={colors.secondary}
+                onPress={() => {Alert.alert(
+                  'Delete message?',
+                  null,
+                  [
+                    {
+                      text: 'Cancel',
+                      onPress: () => {setReactionTarget(null);setOptionVisible(false)},
+                    },
+                    {
+                      text: 'Delete for me',
+                      onPress: () => console.log('Cancel'),
+                    },
+                    {
+                      text: 'Delete for everyone',
+                      onPress: () => console.log('Cancel'),
+                    }
+                  ],
+                  { cancelable: true }
+                );setReactionTarget(null)}}
+                style={styles.icon}
+              />
+              <VectorIcon
+                name="forward"
+                type="Entypo"
+                size={24}
+                color={colors.secondary}
+                // onPress={() => setSearchVisible(false)}
+                style={styles.icon}
+              />
+              <VectorIcon
+                type="MaterialDesignIcons"
+                name="content-copy"
+                color={colors.secondary}
+                size={24}
+                style={styles.icon}
+              />
+            </View>
           </View>
           :
-          <ChatHeader userId={otherUserId} isGroup={chatInfo?.isGroup} groupName={chatInfo?.groupName} groupImage={chatInfo?.groupImage} chatroomId={chatroomId} setSearchVisible={setSearchVisible} theme={theme} setTheme={setTheme}/>
+          searchVisible ?
+            <View style={styles.textContainer}>
+              <VectorIcon
+                name="keyboard-backspace"
+                type="MaterialIcons"
+                size={24}
+                color={colors.secondary}
+                onPress={() => setSearchVisible(false)}
+                style={styles.icon}
+              />
+              <TextInput
+                placeholder="Search for chat..."
+                style={styles.textIp}
+                value={searchValue}
+                onChangeText={(val) => setSearchValue(val)}
+              />
+              <VectorIcon
+                name="content-paste-search"
+                type="MaterialIcons"
+                size={24}
+                color={colors.secondary}
+                style={styles.icon}
+              />
+            </View>
+            :
+            <ChatHeader userId={otherUserId} isGroup={chatInfo?.isGroup} groupName={chatInfo?.groupName} groupImage={chatInfo?.groupImage} chatroomId={chatroomId} setSearchVisible={setSearchVisible} theme={theme} setTheme={setTheme} />
       }
 
-      <ImageBackground source={theme==='first' ? Theme1 : theme==='second' ? Theme2 : theme==='third' ? Theme3 : WpWallpaper} style={styles.wpWallpaper}>
-        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId} localMessages={localMessages} replyTo={replyTo} setReplyTo={setReplyTo} searchValue={searchValue}
+      <ImageBackground source={theme === 'first' ? Theme1 : theme === 'second' ? Theme2 : theme === 'third' ? Theme3 : WpWallpaper} style={styles.wpWallpaper}>
+        <ChatBody chatroomId={chatroomId} failedMessages={failedMessages} setFailedMessages={setFailedMessages} otherUserId={otherUserId} localMessages={localMessages} replyTo={replyTo} setReplyTo={setReplyTo} searchValue={searchValue} setOptionVisible={setOptionVisible} reactionTarget={reactionTarget} setReactionTarget={setReactionTarget} setSelectedMsg={setSelectedMsg}
         />
         {
           previewUrl ? (
@@ -157,15 +234,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 5,
     alignItems: 'center',
-    margin:8,
-    borderRadius:20
+    margin: 8,
+    borderRadius: 20
   },
   textIp: {
     flex: 1,
     paddingLeft: 5
   },
-  icon:{
-    paddingHorizontal:10
+  icon: {
+    paddingHorizontal: 10
+  },
+  mainContainer: {
+    // flex:1,
+    flexDirection: 'row',
+    gap: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  leftContainer: {
+    flexDirection: 'row',
+    gap: 20
+  },
+  rightContainer: {
+    flexDirection: 'row',
+    gap: 15
+  },
+  selectionCountText: {
+    marginRight: 40,
+    fontSize: fontSize.regular,
+    fontWeight: fontWeight.highlight
   }
 })
 
