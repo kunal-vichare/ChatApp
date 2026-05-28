@@ -478,7 +478,8 @@ export const setOnline = async (myUid) => {
         .collection('users')
         .doc(myUid)
         .update({
-            isOnline: true
+            isOnline: true,
+            lastSeen: Date.now(),
         });
 }
 export const get_MemberCount = async (chatroomId, setMemberCount) => {
@@ -503,6 +504,13 @@ export const getUserName = async (myUid) => {
         .get();
     const firestoreName = userDoc.data()?.name || ''
     return firestoreName;
+}
+export const getProfile = async(myUid) => {
+    const userDoc = await firestore()
+        .collection('users')
+        .doc(myUid)
+        .get();
+    return userDoc.data();
 }
 export const setTypingStatus = async (chatroomId, myUid, isTyping) => {
     await firestore()
@@ -538,4 +546,18 @@ export const clearChat = async (chatroomId) => {
     await batch.commit();
     await firestore().collection('chats').doc(chatroomId)
         .update({ lastMessage: '', updatedAt: Date.now(),lastMessageStatus:'',unreadCount:null,lastMessageSenderId:'' });
+};
+
+export const deleteForEveryone = async (chatroomId, messageId) => {
+    const ref = firestore()
+        .collection('chats').doc(chatroomId)
+        .collection('messages').doc(messageId);
+        await ref.update({ text: 'This message was deleted'});
+};
+
+export const deleteForMe = async (chatroomId, messageId) => {
+    const ref = firestore()
+        .collection('chats').doc(chatroomId)
+        .collection('messages').doc(messageId);
+        await ref.update({ text: 'This message was deleted for me'});
 };

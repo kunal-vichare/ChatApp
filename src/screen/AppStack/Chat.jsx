@@ -5,7 +5,7 @@ import { colors, fontSize, fontWeight, padding } from '../../constant'
 import WpWallpaper from '../../assets/image/wpBackground.png'
 import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
-import { subscribeToChatInfo } from '../../database/firestoreCRUD'
+import { deleteForEveryone, deleteForMe, subscribeToChatInfo } from '../../database/firestoreCRUD'
 import VectorIcon from '../../utils/VectorIcons'
 import Clipboard from '@react-native-clipboard/clipboard';
 import Theme1 from '../../assets/image/theme1.jpg'
@@ -27,7 +27,7 @@ const Chat = () => {
   const [selectedMsg, setSelectedMsg] = useState(null);
   const [message, setMessage] = useState("");
   const { chatroomId, otherUserId } = route.params;
-
+  
   const copyToClipboard = () => {
     if (!selectedMsg?.text) return;
 
@@ -105,11 +105,11 @@ const Chat = () => {
                       },
                       {
                         text: 'Delete for me',
-                        onPress: () => console.log('Cancel'),
+                        onPress: () => {deleteForMe(chatroomId,selectedMsg.id);setOptionVisible(false)},
                       },
                       {
                         text: 'Delete for everyone',
-                        onPress: () => console.log('Cancel'),
+                        onPress: () => {deleteForEveryone(chatroomId,selectedMsg.id);setOptionVisible(false)},
                       }
                     ],
                     { cancelable: true }

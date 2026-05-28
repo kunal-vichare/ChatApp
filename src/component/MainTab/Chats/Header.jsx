@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { colors, fontSize, fontWeight, gap, padding } from '../../../constant'
 import VectorIcons from '../../../utils/VectorIcons'
 import { useNavigation } from '@react-navigation/native'
@@ -7,14 +7,15 @@ import { Divider, Menu } from 'react-native-paper'
 import auth from '@react-native-firebase/auth'
 import { useDispatch, useSelector } from 'react-redux'
 import {toggleTheme} from '../../../redux/slice/darkMode'
-import { setOffline } from '../../../database/firestoreCRUD'
+import { get_userInfo, getProfile, setOffline } from '../../../database/firestoreCRUD'
 
 const Header = () => {
-    // const [darkMode, setDarkMode] = useState(false);
     const [visible, setVisible] = useState(false);
     const dispatch = useDispatch();
     const navigation = useNavigation();
-    const myUid = useSelector(state => state.auth.user?.uid);
+    const myUid = useSelector(state => state.auth?.user?.uid);
+    const darkMode = useSelector((state)=>state.theme.dark);
+    const [userData, setUserData] = useState(null);
     const handleLogout = async () => {
         try {
             await auth().signOut();
@@ -23,8 +24,10 @@ const Header = () => {
             console.log(error); 
         }
     }
-    const darkMode = useSelector((state)=>state.theme.dark);
-    
+    useEffect(()=>{
+        get_userInfo(myUid,setUserData)
+    })
+       
     return (
         <View style={styles.container}>
             <Text style={styles.mainText}>Chat Mate</Text>
@@ -55,9 +58,10 @@ const Header = () => {
                     }
                 >
                     <Menu.Item
-                        onPress={() =>
-                            console.log("Button pressed")
-                        }
+                    onPress={() => navigation.navigate('AppStack', {
+                        screen: 'ProfileScreen',
+                        params: { isGroup: false, userData },
+                    })}
                         leadingIcon="account-outline"
                         title="Profile"
                     />
