@@ -7,6 +7,7 @@ import { useRoute } from '@react-navigation/native'
 import { LinkPreview } from 'react-native-preview-url'
 import { subscribeToChatInfo } from '../../database/firestoreCRUD'
 import VectorIcon from '../../utils/VectorIcons'
+import Clipboard from '@react-native-clipboard/clipboard';
 import Theme1 from '../../assets/image/theme1.jpg'
 import Theme2 from '../../assets/image/theme2.jpg'
 import Theme3 from '../../assets/image/theme3.jpg'
@@ -16,15 +17,33 @@ const Chat = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [failedMessages, setFailedMessages] = useState([]);
   const [localMessages, setLocalMessages] = useState([]);
-  const [chatInfo, setChatInfo] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
+  const [chatInfo, setChatInfo] = useState(null);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [theme, setTheme] = useState();
   const [reactionTarget, setReactionTarget] = useState(null);
   const [optionVisible, setOptionVisible] = useState(false);
   const [selectedMsg, setSelectedMsg] = useState(null);
+  const [message, setMessage] = useState("");
   const { chatroomId, otherUserId } = route.params;
+
+  const copyToClipboard = () => {
+    if (!selectedMsg?.text) return;
+
+    Clipboard.setString(selectedMsg.text);
+    setSelectedMsg(null);
+    setReactionTarget(null);
+  };
+
+  const pasteFromClipboard = async () => {
+    const text = await Clipboard.getString();
+      if (text?.trim()) {
+        setMessage(prev => prev + text); // append pasted text
+        setOptionVisible(false);
+      }
+  };
+
 
   // Fetch chat metadata from Firestore
   useEffect(() => {
@@ -75,25 +94,27 @@ const Chat = () => {
                 type="MaterialDesignIcons"
                 size={24}
                 color={colors.secondary}
-                onPress={() => {Alert.alert(
-                  'Delete message?',
-                  null,
-                  [
-                    {
-                      text: 'Cancel',
-                      onPress: () => {setReactionTarget(null);setOptionVisible(false)},
-                    },
-                    {
-                      text: 'Delete for me',
-                      onPress: () => console.log('Cancel'),
-                    },
-                    {
-                      text: 'Delete for everyone',
-                      onPress: () => console.log('Cancel'),
-                    }
-                  ],
-                  { cancelable: true }
-                );setReactionTarget(null)}}
+                onPress={() => {
+                  Alert.alert(
+                    'Delete message?',
+                    null,
+                    [
+                      {
+                        text: 'Cancel',
+                        onPress: () => { setReactionTarget(null); setOptionVisible(false) },
+                      },
+                      {
+                        text: 'Delete for me',
+                        onPress: () => console.log('Cancel'),
+                      },
+                      {
+                        text: 'Delete for everyone',
+                        onPress: () => console.log('Cancel'),
+                      }
+                    ],
+                    { cancelable: true }
+                  ); setReactionTarget(null)
+                }}
                 style={styles.icon}
               />
               <VectorIcon
@@ -104,13 +125,26 @@ const Chat = () => {
                 // onPress={() => setSearchVisible(false)}
                 style={styles.icon}
               />
+              {
+              selectedMsg ?
               <VectorIcon
                 type="MaterialDesignIcons"
                 name="content-copy"
                 color={colors.secondary}
+                onPress={copyToClipboard}
                 size={24}
                 style={styles.icon}
               />
+              :
+              <VectorIcon
+                type="MaterialCommunityIcons"
+                name="content-paste"
+                color={colors.secondary}
+                onPress={pasteFromClipboard}
+                size={24}
+                style={styles.icon}
+              />
+              }
             </View>
           </View>
           :
@@ -218,6 +252,8 @@ const Chat = () => {
           }}
           replyTo={replyTo}
           setReplyTo={setReplyTo}
+          message={message}
+          setMessage={setMessage}
         />
       </ImageBackground>
     </View>
