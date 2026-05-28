@@ -559,5 +559,5 @@ export const deleteForMe = async (chatroomId, messageId) => {
     const ref = firestore()
         .collection('chats').doc(chatroomId)
         .collection('messages').doc(messageId);
-        await ref.update({ text: 'This message was deleted for me'});
+        await ref.delete();
 };
