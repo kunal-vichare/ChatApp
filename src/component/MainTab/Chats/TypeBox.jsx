@@ -4,13 +4,12 @@ import {
 } from 'react-native';
 import { colors } from '../../../constant';
 import VectorIcon from '../../../utils/VectorIcons';
-import { getUserName, resetUnreadCount, sendMessage, setTypingStatus } from '../../../database/firestoreCRUD'
+import { generateId, getUserName, resetUnreadCount, sendMessage, setTypingStatus } from '../../../database/firestoreCRUD'
 import { useSelector } from 'react-redux';
 
 const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, onRemoveLocalMessage, onFail, replyTo, setReplyTo,participants, isGroup,message,setMessage }) => {
   const [sendEnable, setSendEnable] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const data = useSelector(state => state.auth);
   const myUid = useSelector(state => state.auth.user.uid);
   const [myName, setMyName] = useState('');
   const typingTimeoutRef = useRef(null);
@@ -76,9 +75,10 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
     // !message.trim()) => removes spaces from start and end so handle sending empty spaces as message
     if (isSending || !message.trim()) return; //prevent duplicate tap
     const msgText = message;
-    const tempId = `temp_${Date.now()}`;
+    const messageId = generateId(chatroomId);
+    // const tempId = `temp_${Date.now()}`;
     const optimisticMsg = {
-      id: tempId,
+      id: messageId,
       text: msgText,
       senderId: myUid,
       senderName: myName,
@@ -92,9 +92,9 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
     onAddLocalMessage(optimisticMsg);
     try {
       setIsSending(true);
-      await sendMessage(chatroomId, message, myUid, myName, isGroup ? receiverIds : otherUserId, replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null, urlPreview);
+      await sendMessage(messageId,chatroomId, message, myUid, myName, isGroup ? receiverIds : otherUserId, replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null, urlPreview);
       setReplyTo(null);
-      onRemoveLocalMessage(tempId);
+      onRemoveLocalMessage(messageId);
       setMessage('');
       setSendEnable(false);
       setPreviewUrl('');
@@ -105,7 +105,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
       await updateTypingStatus(false);
     } catch (error) {
       console.error(error);
-      onFail?.(tempId, msgText);
+      onFail?.(messageId, msgText);
     } finally {
       setIsSending(false);
     }

@@ -57,14 +57,16 @@ export const getOrCreateChatroom = async (myUid, otherUid) => {
     return chatroomId;
 };
 
-export const sendMessage = async (chatroomId, text, senderId, senderName, receiverId, replyTo = null, urlPreview = null) => {
+export const sendMessage = async (messageId,chatroomId, text, senderId, senderName, receiverId, replyTo = null, urlPreview = null) => {
     try {
-        // throw new Error(Simulatederror);
+        // throw new Error("error");
         await firestore()
             .collection('chats')
             .doc(chatroomId)
             .collection('messages')
-            .add({
+            .doc(messageId)
+            .set({
+                id:messageId,
                 text: text,
                 senderId: senderId,
                 senderName: senderName,
@@ -561,3 +563,11 @@ export const deleteForMe = async (chatroomId, messageId) => {
         .collection('messages').doc(messageId);
         await ref.delete();
 };
+
+export const generateId = (chatroomId) => {
+    return firestore()
+    .collection('chatrooms')
+    .doc(chatroomId)
+    .collection('messages')
+    .doc().id;
+}

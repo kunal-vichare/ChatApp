@@ -28,11 +28,19 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         getUserName(myUid).then(name => setMyName(name || ''));
     }, [myUid]);
 
+    // Merge local + Firestore messages and remove duplicates using id
     const allMessages = [
         ...new Map(
             [...localMessages, ...messages].map(item => [item.id, item])
         ).values()
     ];
+        console.log(
+    allMessages.map(m => ({
+        id: m.id,
+        text: m.text,
+        status: m.status
+    }))
+    );
 
     const MatchFound = allMessages.filter(item =>
         item?.text?.toLowerCase().includes(searchValue?.toLowerCase() || '')
@@ -128,6 +136,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         setRetrying(true);
         try {
             await sendMessage(
+                failedMsg.id,
                 chatroomId,
                 failedMsg.text,
                 myUid,
@@ -147,7 +156,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         }
     };
 
-    const UserMessageView = memo(({ message, time, isFirst, status, reactions, messageId, replyTo, urlPreview,item }) => (
+    const UserMessageView = ({ message, time, isFirst, status, reactions, messageId, replyTo, urlPreview,item }) => (
         <View style={styles.userContainer}>
             <View style={styles.userBubbleWrapper}>
                 <TouchableOpacity
@@ -204,9 +213,9 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                 />
             </View>
         </View>
-    ));
+    );
 
-    const OtherUserMessageView = memo(({ message, time, senderName, isFirst, reactions, messageId, replyTo, urlPreview,item}) => (
+    const OtherUserMessageView = ({ message, time, senderName, isFirst, reactions, messageId, replyTo, urlPreview,item}) => (
         <View style={styles.otherUserContainer}>
             <View style={styles.otherBubbleWrapper}>
                 <TouchableOpacity
@@ -259,7 +268,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                 />
             </View>
         </View>
-    ));
+    );
 
     const renderItem = ({ item, index }) => {
         const time = formatTimestamp(item.timestamp);
