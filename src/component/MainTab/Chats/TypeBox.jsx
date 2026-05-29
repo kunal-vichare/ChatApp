@@ -35,19 +35,22 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
   const handleTextChange = (text) => {
     setMessage(text);
     setSendEnable(text.trim().length > 0);
+
+    //Link Preview
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const match = text.match(urlRegex);
-    console.log("Match: ",match);
-    
+
     if (match && match[0]) {
       setPreviewUrl(match[0]);
     } else {
       setPreviewUrl('');
     }
+
+    //Typing status
     updateTypingStatus(true);
 
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
+    if (typingTimeoutRef.current) { //typingTimeoutRef.current -> store timeout ID return by setTimeout
+      clearTimeout(typingTimeoutRef.current); //without this every key stroke create new timer
     }
 
     typingTimeoutRef.current = setTimeout(() => {
@@ -65,7 +68,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
 
   useEffect(() => {
     return () => {
-      // Clear typing status when user leaves the screen
+      // Clear typing status when user leaves the screen avoid memory leaks
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
@@ -74,10 +77,9 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
   }, []);
 
   const handleSend = async () => {
-    // !message.trim()) => removes spaces from start and end so handle sending empty spaces as message
-    if (isSending || !message.trim()) return; //prevent duplicate tap
+    if (isSending || !message.trim()) return; //prevent duplicate tap & empty spaces as message 
     const msgText = message;
-    const messageId = generateId(chatroomId);
+    const messageId = generateId(chatroomId); //created random ID to match it with firebase message ID
     // const tempId = `temp_${Date.now()}`;
     const optimisticMsg = {
       id: messageId,

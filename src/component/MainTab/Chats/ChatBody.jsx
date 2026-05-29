@@ -9,7 +9,6 @@ import { getChatDaySeparator } from '../../../utils/GetTime'
 import { getStatusIcon } from '../../../utils/GetStatusIcon';
 import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus, addReaction, getUserName } from '../../../database/firestoreCRUD';
 import { FailedMessage, ReactionDisplay, ReactionPicker, SwipeableMessage } from '../../../component/MainTab/Chats';
-import LinkPreview from 'react-native-preview-url';
 
 const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, localMessages, replyTo, setReplyTo, searchValue,setOptionVisible,reactionTarget,setReactionTarget,setSelectedMsg }) => {
     const [loading, setLoading] = useState(false);
@@ -136,8 +135,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                 myUid,
                 myName,
                 otherUserId,
-                //reply to
-                //link preview missing
+                replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null, 
             );
 
             // Success — remove from failed list

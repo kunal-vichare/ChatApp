@@ -216,7 +216,6 @@ export const markAllDelivered = async (myUid) => {
 
             await batch.commit();
 
-            // ✅ Check directly from sentMsgs — no need for extra query
             // Sort by timestamp to find the last message among updated ones
             const otherUserMsgs = sentMsgs.docs
                 .filter(doc => doc.data().senderId !== myUid)
@@ -240,7 +239,7 @@ export const markAllDelivered = async (myUid) => {
 
             const lastMsg = lastMsgSnap.docs[0].data();
 
-            // ✅ No status check — just verify last msg belongs to other user
+            //verify last msg belongs to other user
             if (lastMsg.senderId !== myUid) {
                 await firestore()
                     .collection('chats')
