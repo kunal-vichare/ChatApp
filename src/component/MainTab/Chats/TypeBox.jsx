@@ -37,6 +37,8 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
     setSendEnable(text.trim().length > 0);
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const match = text.match(urlRegex);
+    console.log("Match: ",match);
+    
     if (match && match[0]) {
       setPreviewUrl(match[0]);
     } else {

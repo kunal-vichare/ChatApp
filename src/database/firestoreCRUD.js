@@ -79,7 +79,15 @@ export const sendMessage = async (messageId,chatroomId, text, senderId, senderNa
                         senderName: replyTo.senderName,
                     }
                 }),
-                ...(urlPreview && { urlPreview }),
+                ...(urlPreview && { 
+                    urlPreview: {
+                        url:urlPreview,
+                        title:"Github",
+                        description:"Join the worlds most widely adopted, AI powered developer",
+                        image:"https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/github-icon.png",
+                        siteName:"github.com"
+                    } 
+                }),
             });
 
         await firestore().collection('chats').doc(chatroomId).update({
@@ -246,7 +254,7 @@ export const markAllDelivered = async (myUid) => {
 };
 
 // Subscribe to typing indicator
-export const subscribeToTyping = (chatroomId, myUid, onUpdate) => {
+export const subscribeToTyping = (chatroomId, myUid, setOtherUserTyping) => {
     return firestore()
         .collection('chats')
         .doc(chatroomId)
@@ -254,7 +262,7 @@ export const subscribeToTyping = (chatroomId, myUid, onUpdate) => {
             const data = snapshot.data();
             const typing = data?.typing || {};
             const otherUid = data?.participants?.find(uid => uid !== myUid);
-            onUpdate(typing[otherUid] === true);
+            setOtherUserTyping(typing[otherUid] === true);
         });
 };
 

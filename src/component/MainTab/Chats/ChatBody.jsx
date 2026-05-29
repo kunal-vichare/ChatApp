@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
 import { colors, fontFamily, fontSize, fontWeight } from '../../../constant';
 import { useSelector } from 'react-redux';
 import { formatTimestamp } from '../../../utils/GetTime';
-import { Loader } from '../../../component/MainTab/Chats';
+import { ChatLinkPreview, Loader } from '../../../component/MainTab/Chats';
 import { getChatDaySeparator } from '../../../utils/GetTime'
 import { getStatusIcon } from '../../../utils/GetStatusIcon';
 import { fetchMoreMessages, getOtherUserName, sendMessage, subscribeToMessages, subscribeToTyping, updateMessageStatus, addReaction, getUserName } from '../../../database/firestoreCRUD';
@@ -16,8 +16,8 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     const [messages, setMessages] = useState([]);
     const [lastDoc, setLastDoc] = useState(null);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
     const [showScrollToEnd, setShowScrollToEnd] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
     const [retrying, setRetrying] = useState(false);
     const [otherUserName, setOtherUserName] = useState('');
     const [otherUserTyping, setOtherUserTyping] = useState(false);
@@ -40,7 +40,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     );
 
     const flatListRef = useRef(null);
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 20;
 
     const scrollToBottom = () => {
         flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -70,6 +70,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
     const handleReaction = async (emoji) => {
         if (!reactionTarget) return;
         try {
+            setOptionVisible(false);
             await addReaction(chatroomId, reactionTarget, emoji, myUid);
         } catch (error) {
             console.log('reaction error:', error);
@@ -83,7 +84,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         try {
             const { msgs, newLastDoc, hasMore: more } = await fetchMoreMessages(chatroomId, lastDoc, PAGE_SIZE);
             if (msgs.length === 0) { setHasMore(false); return; }
-            setMessages(prev => [...prev, ...msgs]);
+            setMessages(prev => [...prev, ...msgs]); //To be fixed: messages are replaced not append
             setLastDoc(newLastDoc);
             setHasMore(more);
         } catch (error) {
@@ -93,14 +94,14 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         }
     };
 
-    // Messages listener
+    // Messages listener for real time updates
     useEffect(() => {
         setLoading(true);
         const unsubscribe = subscribeToMessages(
             chatroomId,
             PAGE_SIZE,
             ({ msgs, lastDoc: newLastDoc, hasMore: newHasMore }) => {
-                setMessages(msgs);
+                setMessages(msgs); //To be fixed: messages are replaced not append
                 setLastDoc(newLastDoc);
                 setHasMore(newHasMore);
                 updateMessageStatus(chatroomId, msgs, myUid);
@@ -134,14 +135,15 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                 failedMsg.text,
                 myUid,
                 myName,
-                otherUserId
+                otherUserId,
+                //reply to
+                //link preview missing
             );
 
             // Success — remove from failed list
             setFailedMessages(prev =>
                 prev.filter(m => m.id !== failedMsg.id)
             );
-
         } catch (error) {
             console.log('retry failed:', error);
         } finally {
@@ -154,7 +156,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
             <View style={styles.userBubbleWrapper}>
                 <TouchableOpacity
                     onLongPress={() => {setReactionTarget(messageId);setOptionVisible(true);setSelectedMsg(item)}}
-                    activeOpacity={0.8}
+                    activeOpacity={0.5}
                     style={styles.btn}
                 >
                     <View style={styles.userInnerContainer}>
@@ -173,18 +175,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                             </View>
                         )}
                         {urlPreview && (
-                            <LinkPreview
-                                url={urlPreview}
-                                timeout={3000}
-                                onError={(e) => console.log(e)}
-                                containerStyle={styles.linkPreviewContainer}
-                                imageStyle={styles.linkPreviewImage}
-                                textContainerStyle={styles.linkPreviewTextContainer}
-                                titleStyle={styles.linkPreviewTitle}
-                                descriptionStyle={styles.linkPreviewDesc}
-                                titleLines={1}
-                                descriptionLines={2}
-                            />
+                            <ChatLinkPreview urlPreview={urlPreview}/>
                         )}
 
                         <Text style={styles.message}>{message}</Text>
@@ -232,18 +223,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                             </View>
                         )}
                         {urlPreview && (
-                            <LinkPreview
-                                url={urlPreview}
-                                timeout={3000}
-                                onError={(e) => console.log(e)}
-                                containerStyle={styles.linkPreviewContainer}
-                                imageStyle={styles.linkPreviewImage}
-                                textContainerStyle={styles.linkPreviewTextContainer}
-                                titleStyle={styles.linkPreviewTitle}
-                                descriptionStyle={styles.linkPreviewDesc}
-                                titleLines={1}
-                                descriptionLines={2}
-                            />
+                            <ChatLinkPreview urlPreview={urlPreview}/>
                         )}
                         <Text style={styles.message}>{message}</Text>
                         <View style={styles.metaContainer}>
@@ -263,7 +243,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
         </View>
     );
 
-    const renderItem = ({ item, index }) => {
+    const renderItem = useCallback(({ item, index }) => {
         const time = formatTimestamp(item.timestamp);
         const { isFirst, isLast, isMiddle } = getGroupFlags(index);
         const currentDate = new Date(item.timestamp) || null;
@@ -314,7 +294,7 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
                     : null}
             </>
         );
-    };
+    },[allMessages, myUid, reactionTarget]);
 
     return (
         <View style={{ flex: 1 }}>
@@ -655,36 +635,6 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.highlight,
         color: '#555',
         fontFamily: fontFamily.popinsRegular,
-    },
-    linkPreviewContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 8,
-        backgroundColor: '#fff',
-        // marginBottom: 6,
-        // overflow: 'hidden',
-        padding: 4,
-        maxWidth: '99%'
-    },
-    linkPreviewImage: {
-        // height: '80%',
-        maxWidth: '30%',
-        borderRadius: 6,
-        resizeMode: 'contain',
-    },
-    linkPreviewTextContainer: {
-        // flex: 1,
-        marginLeft: 8,
-        justifyContent: 'center',
-    },
-    linkPreviewTitle: {
-        fontSize: 13,
-        fontWeight: 'bold',
-        color: colors.secondary,
-    },
-    linkPreviewDesc: {
-        fontSize: 11,
-        color: '#666',
     },
 });
 
