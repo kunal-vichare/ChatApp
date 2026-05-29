@@ -101,7 +101,7 @@ export const sendMessage = async (messageId,chatroomId, text, senderId, senderNa
     }
 };
 
-// Subscribe to latest messages (realtime, paginated)
+// Latest messages update live
 export const subscribeToMessages = (chatroomId, PAGE_SIZE, onUpdate, onError) => {
     return firestore()
         .collection('chats')
@@ -126,7 +126,7 @@ export const subscribeToMessages = (chatroomId, PAGE_SIZE, onUpdate, onError) =>
         }, onError);
 };
 
-// Fetch older messages (pagination)
+// Older messages load when scrolling up (pagination)
 export const fetchMoreMessages = async (chatroomId, lastDoc, PAGE_SIZE) => {
     const snapshot = await firestore()
         .collection('chats')
@@ -288,7 +288,7 @@ export const addReaction = async (chatroomId, messageId, emoji, myUid) => {
     const reactions = msgDoc.data()?.reactions || {};
 
     // Each emoji holds an array of uids who reacted with it
-    const currentUsers = reactions[emoji] || [];
+    const currentUsers = reactions[emoji] || []; //get uid of who reacted
     const alreadyReacted = currentUsers.includes(myUid);
 
     if (alreadyReacted) {

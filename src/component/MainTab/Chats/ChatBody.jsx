@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import VectorIcon from '../../../utils/VectorIcons';
 import { colors, fontFamily, fontSize, fontWeight } from '../../../constant';
 import { useSelector } from 'react-redux';
@@ -30,17 +30,10 @@ const ChatBody = ({ chatroomId, failedMessages, setFailedMessages, otherUserId, 
 
     // Merge local + Firestore messages and remove duplicates using id
     const allMessages = [
-        ...new Map(
-            [...localMessages, ...messages].map(item => [item.id, item])
-        ).values()
+        ...new Map( //only keeps one value per key.
+            [...localMessages, ...messages].map(item => [item.id, item]) //convert items into key value pairs
+        ).values() //Gets only the message objects
     ];
-        console.log(
-    allMessages.map(m => ({
-        id: m.id,
-        text: m.text,
-        status: m.status
-    }))
-    );
 
     const MatchFound = allMessages.filter(item =>
         item?.text?.toLowerCase().includes(searchValue?.toLowerCase() || '')
