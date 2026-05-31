@@ -227,6 +227,7 @@ const Chat = () => {
         }
         <TypeBox
           chatroomId={chatroomId}
+          urlPreview={previewUrl}
           setPreviewUrl={setPreviewUrl}
           otherUserId={otherUserId}
           isGroup={chatInfo?.isGroup}

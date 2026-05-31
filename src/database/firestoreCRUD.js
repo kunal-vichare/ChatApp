@@ -1,8 +1,12 @@
-import firestore from '@react-native-firebase/firestore';
-import { formatTimestamp } from '../utils/GetTime'
+import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,query,where,orderBy,limit,startAfter,onSnapshot,writeBatch,arrayUnion,increment,deleteField} from '@react-native-firebase/firestore';
+
+import { formatTimestamp } from '../utils/GetTime';
+
+const db = getFirestore();
+
 export const addUserData = async (user) => {
     try {
-        await firestore().collection('users').doc(user.uid).set({
+        await setDoc(doc(db, 'users', user.uid), {
             uid: user.uid,
             email: user.email,
             name: user.name,
@@ -19,8 +23,8 @@ export const addUserData = async (user) => {
 
 export const getUsers = async () => {
     try {
-        const usersSnapshot = await firestore().collection('users').get();
-        const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const users = usersSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         console.log("Fetched users: ", users);
         return users;
     } catch (error) {
@@ -30,7 +34,7 @@ export const getUsers = async () => {
 
 export const updateUser = async (id, updatedData) => {
     try {
-        await firestore().collection('users').doc(id).update(updatedData);
+        await updateDoc(doc(db, 'users', id), updatedData);
         console.log("User updated successfully");
     } catch (error) {
         console.log("Error updating user data: ", error);
@@ -39,7 +43,7 @@ export const updateUser = async (id, updatedData) => {
 
 export const deleteUser = async (id) => {
     try {
-        await firestore().collection('users').doc(id).delete();
+        await deleteDoc(doc(db, 'users', id));
         console.log("User deleted successfully");
     } catch (error) {
         console.log("Error deleting user data: ", error);
@@ -48,59 +52,52 @@ export const deleteUser = async (id) => {
 
 export const getOrCreateChatroom = async (myUid, otherUid) => {
     const chatroomId = [myUid, otherUid].sort().join('_');
-    const ref = firestore().collection('chats').doc(chatroomId);
-    await ref.set({
+    const ref = doc(db, 'chats', chatroomId);
+    await setDoc(ref, {
         participants: [myUid, otherUid],
-        // lastMessage: '',
         updatedAt: Date.now(),
     }, { merge: true });
     return chatroomId;
 };
 
-export const sendMessage = async (messageId,chatroomId, text, senderId, senderName, receiverId, replyTo = null, urlPreview = null) => {
+export const sendMessage = async (messageId, chatroomId, text, senderId, senderName, receiverId, replyTo = null, urlPreview = null) => {
     try {
-        // throw new Error("error");
-        await firestore()
-            .collection('chats')
-            .doc(chatroomId)
-            .collection('messages')
-            .doc(messageId)
-            .set({
-                id:messageId,
-                text: text,
-                senderId: senderId,
-                senderName: senderName,
-                timestamp: Date.now(),
-                status: 'sent',
-                ...(replyTo && {
-                    replyTo: {
-                        id: replyTo.id,
-                        text: replyTo.text,
-                        senderName: replyTo.senderName,
-                    }
-                }),
-                ...(urlPreview && { 
-                    urlPreview: {
-                        url:urlPreview,
-                        title:"Github",
-                        description:"Join the worlds most widely adopted, AI powered developer",
-                        image:"https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/github-icon.png",
-                        siteName:"github.com"
-                    } 
-                }),
-            });
+        await setDoc(doc(db, 'chats', chatroomId, 'messages', messageId), {
+            id: messageId,
+            text: text,
+            senderId: senderId,
+            senderName: senderName,
+            timestamp: Date.now(),
+            status: 'sent',
+            ...(replyTo && {
+                replyTo: {
+                    id: replyTo.id,
+                    text: replyTo.text,
+                    senderName: replyTo.senderName,
+                }
+            }),
+            ...(urlPreview && {
+                urlPreview: {
+                    url: urlPreview.url,
+                    title: urlPreview.title,
+                    description: urlPreview.description,
+                    image: urlPreview.image,
+                    siteName: urlPreview.siteName
+                }
+            }),
+        });
 
-        await firestore().collection('chats').doc(chatroomId).update({
+        await updateDoc(doc(db, 'chats', chatroomId), {
             lastMessage: text,
             lastMessageStatus: 'sent',
             lastMessageSenderId: senderId,
             updatedAt: Date.now(),
             ...(Array.isArray(receiverId)
                 ? receiverId.reduce((acc, uid) => {
-                    acc[`unreadCount.${uid}`] = firestore.FieldValue.increment(1);
+                    acc[`unreadCount.${uid}`] = increment(1);
                     return acc;
                 }, {})
-                : { [`unreadCount.${receiverId}`]: firestore.FieldValue.increment(1) }
+                : { [`unreadCount.${receiverId}`]: increment(1) }
             ),
         });
     } catch (error) {
@@ -109,22 +106,21 @@ export const sendMessage = async (messageId,chatroomId, text, senderId, senderNa
     }
 };
 
-// Latest messages update live
 export const subscribeToMessages = (chatroomId, PAGE_SIZE, onUpdate, onError) => {
-    return firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .collection('messages')
-        .orderBy('timestamp', 'desc')
-        .limit(PAGE_SIZE)
-        .onSnapshot(snapshot => {
+    return onSnapshot(
+        query(
+            collection(db, 'chats', chatroomId, 'messages'),
+            orderBy('timestamp', 'desc'),
+            limit(PAGE_SIZE)
+        ),
+        snapshot => {
             if (snapshot.empty) {
                 onUpdate({ msgs: [], lastDoc: null, hasMore: false });
                 return;
             }
-            const msgs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
+            const msgs = snapshot.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
             }));
             onUpdate({
                 msgs,
@@ -134,37 +130,30 @@ export const subscribeToMessages = (chatroomId, PAGE_SIZE, onUpdate, onError) =>
         }, onError);
 };
 
-// Older messages load when scrolling up (pagination)
 export const fetchMoreMessages = async (chatroomId, lastDoc, PAGE_SIZE) => {
-    const snapshot = await firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .collection('messages')
-        .orderBy('timestamp', 'desc')
-        .startAfter(lastDoc)
-        .limit(PAGE_SIZE)
-        .get();
-
+    const snapshot = await getDocs(
+        query(
+            collection(db, 'chats', chatroomId, 'messages'),
+            orderBy('timestamp', 'desc'),
+            startAfter(lastDoc),
+            limit(PAGE_SIZE)
+        )
+    );
     return {
-        msgs: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        msgs: snapshot.docs.map(d => ({ id: d.id, ...d.data() })),
         newLastDoc: snapshot.docs[snapshot.docs.length - 1],
         hasMore: snapshot.docs.length === PAGE_SIZE,
     };
 };
 
-// Batch update messages to 'read' status
 export const updateMessageStatus = async (chatroomId, msgs, myUid) => {
-    const batch = firestore().batch();
+    const batch = writeBatch(db);
     let hasUpdates = false;
 
     msgs.forEach(msg => {
         if (msg.senderId === myUid) return;
         if (msg.status === 'sent' || msg.status === 'delivered') {
-            const msgRef = firestore()
-                .collection('chats')
-                .doc(chatroomId)
-                .collection('messages')
-                .doc(msg.id);
+            const msgRef = doc(db, 'chats', chatroomId, 'messages', msg.id);
             batch.update(msgRef, { status: 'read' });
             hasUpdates = true;
         }
@@ -176,38 +165,34 @@ export const updateMessageStatus = async (chatroomId, msgs, myUid) => {
 
     const lastMsg = msgs[0];
     if (lastMsg?.senderId !== myUid) {
-        await firestore()
-            .collection('chats')
-            .doc(chatroomId)
-            .update({ lastMessageStatus: 'read' });
+        await updateDoc(doc(db, 'chats', chatroomId), { lastMessageStatus: 'read' });
     }
 };
 
 export const markAllDelivered = async (myUid) => {
     try {
-        const chatsSnap = await firestore()
-            .collection('chats')
-            .where('participants', 'array-contains', myUid)
-            .get();
+        const chatsSnap = await getDocs(
+            query(collection(db, 'chats'), where('participants', 'array-contains', myUid))
+        );
 
         for (const chatDoc of chatsSnap.docs) {
             const chatroomId = chatDoc.id;
 
-            const sentMsgs = await firestore()
-                .collection('chats')
-                .doc(chatroomId)
-                .collection('messages')
-                .where('status', '==', 'sent')
-                .get();
+            const sentMsgs = await getDocs(
+                query(
+                    collection(db, 'chats', chatroomId, 'messages'),
+                    where('status', '==', 'sent')
+                )
+            );
 
             if (sentMsgs.empty) continue;
 
-            const batch = firestore().batch();
+            const batch = writeBatch(db);
             let hasUpdates = false;
 
-            sentMsgs.docs.forEach(doc => {
-                if (doc.data().senderId !== myUid) {
-                    batch.update(doc.ref, { status: 'delivered' });
+            sentMsgs.docs.forEach(d => {
+                if (d.data().senderId !== myUid) {
+                    batch.update(d.ref, { status: 'delivered' });
                     hasUpdates = true;
                 }
             });
@@ -216,35 +201,28 @@ export const markAllDelivered = async (myUid) => {
 
             await batch.commit();
 
-            // Sort by timestamp to find the last message among updated ones
             const otherUserMsgs = sentMsgs.docs
-                .filter(doc => doc.data().senderId !== myUid)
+                .filter(d => d.data().senderId !== myUid)
                 .sort((a, b) => b.data().timestamp - a.data().timestamp);
 
             if (otherUserMsgs.length === 0) continue;
 
             const lastUpdatedMsg = otherUserMsgs[0].data();
 
-            // Only update outer if this last updated msg is also
-            // the last message of the entire chatroom
-            const lastMsgSnap = await firestore()
-                .collection('chats')
-                .doc(chatroomId)
-                .collection('messages')
-                .orderBy('timestamp', 'desc')
-                .limit(1)
-                .get();
+            const lastMsgSnap = await getDocs(
+                query(
+                    collection(db, 'chats', chatroomId, 'messages'),
+                    orderBy('timestamp', 'desc'),
+                    limit(1)
+                )
+            );
 
             if (lastMsgSnap.empty) continue;
 
             const lastMsg = lastMsgSnap.docs[0].data();
 
-            //verify last msg belongs to other user
             if (lastMsg.senderId !== myUid) {
-                await firestore()
-                    .collection('chats')
-                    .doc(chatroomId)
-                    .update({ lastMessageStatus: 'delivered' });
+                await updateDoc(doc(db, 'chats', chatroomId), { lastMessageStatus: 'delivered' });
             }
         }
     } catch (error) {
@@ -252,79 +230,59 @@ export const markAllDelivered = async (myUid) => {
     }
 };
 
-// Subscribe to typing indicator
 export const subscribeToTyping = (chatroomId, myUid, setOtherUserTyping) => {
-    return firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .onSnapshot(snapshot => {
-            const data = snapshot.data();
-            const typing = data?.typing || {};
-            const otherUid = data?.participants?.find(uid => uid !== myUid);
-            setOtherUserTyping(typing[otherUid] === true);
-        });
+    return onSnapshot(doc(db, 'chats', chatroomId), snapshot => {
+        const data = snapshot.data();
+        const typing = data?.typing || {};
+        const otherUid = data?.participants?.find(uid => uid !== myUid);
+        setOtherUserTyping(typing[otherUid] === true);
+    });
 };
 
-// Get other participant's name
 export const getOtherUserName = async (chatroomId, myUid) => {
-    const chatDoc = await firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .get();
+    const chatDoc = await getDoc(doc(db, 'chats', chatroomId));
 
     const otherUid = chatDoc.data()?.participants?.find(uid => uid !== myUid);
     if (!otherUid) return 'Other';
 
-    const userDoc = await firestore()
-        .collection('users')
-        .doc(otherUid)
-        .get();
+    const userDoc = await getDoc(doc(db, 'users', otherUid));
 
     return userDoc.data()?.name || 'Other';
 };
 
 export const addReaction = async (chatroomId, messageId, emoji, myUid) => {
-    const msgRef = firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .collection('messages')
-        .doc(messageId);
+    const msgRef = doc(db, 'chats', chatroomId, 'messages', messageId);
 
-    const msgDoc = await msgRef.get();
+    const msgDoc = await getDoc(msgRef);
 
     const reactions = msgDoc.data()?.reactions || {};
 
-    // Each emoji holds an array of uids who reacted with it
-    const currentUsers = reactions[emoji] || []; //get uid of who reacted
+    const currentUsers = reactions[emoji] || [];
     const alreadyReacted = currentUsers.includes(myUid);
 
     if (alreadyReacted) {
-        // Toggle off — remove uid from that emoji's array
         const updated = currentUsers.filter(uid => uid !== myUid);
         if (updated.length === 0) {
-            // Remove emoji key entirely if no users left
-            await msgRef.update({
-                [`reactions.${emoji}`]: firestore.FieldValue.delete()
+            await updateDoc(msgRef, {
+                [`reactions.${emoji}`]: deleteField()
             });
         } else {
-            await msgRef.update({
+            await updateDoc(msgRef, {
                 [`reactions.${emoji}`]: updated
             });
         }
     } else {
-        // Add uid to emoji's array
-        await msgRef.update({
-            [`reactions.${emoji}`]: firestore.FieldValue.arrayUnion(myUid)
+        await updateDoc(msgRef, {
+            [`reactions.${emoji}`]: arrayUnion(myUid)
         });
     }
 };
 
-// Create a group chatroom
 export const createGroupChat = async (myUid, memberUids, groupName) => {
     const groupId = `group_${Date.now()}_${myUid}`;
     const allParticipants = [myUid, ...memberUids];
 
-    await firestore().collection('chats').doc(groupId).set({
+    await setDoc(doc(db, 'chats', groupId), {
         isGroup: true,
         groupName,
         groupAdmin: myUid,
@@ -342,37 +300,26 @@ export const createGroupChat = async (myUid, memberUids, groupName) => {
     return groupId;
 };
 
-// Get group info (name, members)
-// export const getGroupInfo = async (chatroomId) => {
-//     const doc = await firestore().collection('chats').doc(chatroomId).get();
-//     return doc.data();
-// };
-
 export const subscribeToChatInfo = (chatroomId, onUpdate) => {
-    return firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .onSnapshot(snap => {
-            const data = snap.data();
-            if (data) {
-                onUpdate({
-                    isGroup: data.isGroup || false,
-                    groupName: data.groupName || '',
-                    participants: data.participants || [],
-                    groupImage: data.groupImage || null
-                });
-            }
-        });
+    return onSnapshot(doc(db, 'chats', chatroomId), snap => {
+        const data = snap.data();
+        if (data) {
+            onUpdate({
+                isGroup: data.isGroup || false,
+                groupName: data.groupName || '',
+                participants: data.participants || [],
+                groupImage: data.groupImage || null
+            });
+        }
+    });
 };
 
 export const subscribeToChatList = (myUid, setChatList, setLoading) => {
     const unsubscribers = [];
 
-    const unsubscribeChats = firestore()
-        .collection('chats')
-        .where('participants', 'array-contains', myUid)
-        .onSnapshot(snapshot => {
-
+    const unsubscribeChats = onSnapshot(
+        query(collection(db, 'chats'), where('participants', 'array-contains', myUid)),
+        snapshot => {
             if (snapshot.empty) {
                 setLoading(false);
                 return;
@@ -409,10 +356,9 @@ export const subscribeToChatList = (myUid, setChatList, setLoading) => {
                 } else {
                     const otherUid = data.participants.find(uid => uid !== myUid);
 
-                    const unsubscribeUser = firestore()
-                        .collection('users')
-                        .doc(otherUid)
-                        .onSnapshot(userDoc => {
+                    const unsubscribeUser = onSnapshot(
+                        doc(db, 'users', otherUid),
+                        userDoc => {
                             const userData = userDoc.data();
                             setChatList(prev => {
                                 const existingIndex = prev.findIndex(c => c.chatId === chatId);
@@ -451,130 +397,102 @@ export const subscribeToChatList = (myUid, setChatList, setLoading) => {
 };
 
 export const subscribeToGroupInfo = (chatroomId, setGroupData, setMembers, setLoading) => {
-    const unsubscribe = firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .onSnapshot(async snap => {
-            const data = snap.data();
-            if (!data) return;
+    const unsubscribe = onSnapshot(doc(db, 'chats', chatroomId), async snap => {
+        const data = snap.data();
+        if (!data) return;
 
-            setGroupData(data);
+        setGroupData(data);
 
-            // Fetch all members' user docs
-            const memberDocs = await Promise.all(
-                data.participants.map(uid =>
-                    firestore().collection('users').doc(uid).get()
-                )
-            );
-            setMembers(memberDocs.map(d => d.data()).filter(Boolean));
-            setLoading(false);
-        });
+        const memberDocs = await Promise.all(
+            data.participants.map(uid => getDoc(doc(db, 'users', uid)))
+        );
+        setMembers(memberDocs.map(d => d.data()).filter(Boolean));
+        setLoading(false);
+    });
 
     return () => unsubscribe();
 }
 
 export const setOffline = async (myUid) => {
-    await firestore()
-        .collection('users')
-        .doc(myUid)
-        .update({
-            isOnline: false,
-            lastSeen: Date.now(),
-        });
+    await updateDoc(doc(db, 'users', myUid), {
+        isOnline: false,
+        lastSeen: Date.now(),
+    });
 }
+
 export const setOnline = async (myUid) => {
-    await firestore()
-        .collection('users')
-        .doc(myUid)
-        .update({
-            isOnline: true,
-            lastSeen: Date.now(),
-        });
+    await updateDoc(doc(db, 'users', myUid), {
+        isOnline: true,
+        lastSeen: Date.now(),
+    });
 }
-export const get_MemberCount = async (chatroomId, setMemberCount) => {
-    return firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .onSnapshot(snap => {
-            setMemberCount(snap.data()?.participants?.length || 0);
-        });
+
+export const get_MemberCount = (chatroomId, setMemberCount) => {
+    return onSnapshot(doc(db, 'chats', chatroomId), snap => {
+        setMemberCount(snap.data()?.participants?.length || 0);
+    });
 }
-export const get_userInfo = async (userId, setUserData) => {
-    return firestore().collection('users').doc(userId)
-        .onSnapshot(snap => {
-            if (snap?.data()) setUserData(snap?.data());
-        });
+
+export const get_userInfo = (userId, setUserData) => {
+    return onSnapshot(doc(db, 'users', userId), snap => {
+        if (snap?.data()) setUserData(snap?.data());
+    });
 }
 
 export const getUserName = async (myUid) => {
-    const userDoc = await firestore()
-        .collection('users')
-        .doc(myUid)
-        .get();
+    const userDoc = await getDoc(doc(db, 'users', myUid));
     const firestoreName = userDoc.data()?.name || ''
     return firestoreName;
 }
-export const getProfile = async(myUid) => {
-    const userDoc = await firestore()
-        .collection('users')
-        .doc(myUid)
-        .get();
+
+export const getProfile = async (myUid) => {
+    const userDoc = await getDoc(doc(db, 'users', myUid));
     return userDoc.data();
 }
+
 export const setTypingStatus = async (chatroomId, myUid, isTyping) => {
-    await firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .update({
-            [`typing.${myUid}`]: isTyping,
-        });
+    await updateDoc(doc(db, 'chats', chatroomId), {
+        [`typing.${myUid}`]: isTyping,
+    });
 }
+
 export const resetUnreadCount = async (chatroomId, myUid) => {
-    await firestore()
-        .collection('chats')
-        .doc(chatroomId)
-        .update({
-            [`unreadCount.${myUid}`]: 0,
-        })
+    await updateDoc(doc(db, 'chats', chatroomId), {
+        [`unreadCount.${myUid}`]: 0,
+    })
 }
+
 export const setCurrentUserOffline = async (currentUser) => {
-    await firestore()
-        .collection('users')
-        .doc(currentUser.uid)
-        .update({
-            isOnline: false,
-            lastSeen: Date.now(),
-        });
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+        isOnline: false,
+        lastSeen: Date.now(),
+    });
 }
+
 export const clearChat = async (chatroomId) => {
-    const messages = await firestore()
-        .collection('chats').doc(chatroomId)
-        .collection('messages').get();
-    const batch = firestore().batch();
-    messages.docs.forEach(doc => batch.delete(doc.ref));
+    const messages = await getDocs(collection(db, 'chats', chatroomId, 'messages'));
+    const batch = writeBatch(db);
+    messages.docs.forEach(d => batch.delete(d.ref));
     await batch.commit();
-    await firestore().collection('chats').doc(chatroomId)
-        .update({ lastMessage: '', updatedAt: Date.now(),lastMessageStatus:'',unreadCount:null,lastMessageSenderId:'' });
+    await updateDoc(doc(db, 'chats', chatroomId), {
+        lastMessage: '',
+        updatedAt: Date.now(),
+        lastMessageStatus: '',
+        unreadCount: null,
+        lastMessageSenderId: ''
+    });
 };
 
 export const deleteForEveryone = async (chatroomId, messageId) => {
-    const ref = firestore()
-        .collection('chats').doc(chatroomId)
-        .collection('messages').doc(messageId);
-        await ref.update({ text: 'This message was deleted'});
+    await updateDoc(doc(db, 'chats', chatroomId, 'messages', messageId), {
+        text: 'This message was deleted'
+    });
 };
 
 export const deleteForMe = async (chatroomId, messageId) => {
-    const ref = firestore()
-        .collection('chats').doc(chatroomId)
-        .collection('messages').doc(messageId);
-        await ref.delete();
+    await deleteDoc(doc(db, 'chats', chatroomId, 'messages', messageId));
 };
 
 export const generateId = (chatroomId) => {
-    return firestore()
-    .collection('chatrooms')
-    .doc(chatroomId)
-    .collection('messages')
-    .doc().id;
+    return doc(collection(db, 'chats', chatroomId, 'messages')).id;
 }

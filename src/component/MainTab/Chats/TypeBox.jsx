@@ -6,15 +6,21 @@ import { colors } from '../../../constant';
 import VectorIcon from '../../../utils/VectorIcons';
 import { generateId, getUserName, resetUnreadCount, sendMessage, setTypingStatus } from '../../../database/firestoreCRUD'
 import { useSelector } from 'react-redux';
+import { useUrlPreview } from 'react-native-preview-url';
 
-const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, onRemoveLocalMessage, onFail, replyTo, setReplyTo,participants, isGroup,message,setMessage }) => {
+const TypeBox = ({ chatroomId, urlPreview, setPreviewUrl, otherUserId, onAddLocalMessage, onRemoveLocalMessage, onFail, replyTo, setReplyTo, participants, isGroup, message, setMessage }) => {
   const [sendEnable, setSendEnable] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const myUid = useSelector(state => state.auth.user.uid);
   const [myName, setMyName] = useState('');
   const typingTimeoutRef = useRef(null);
+  const { loading, data, error } = useUrlPreview(urlPreview);
+  // console.log("urlPreview: ",urlPreview);
+  // console.log("urlPreview: ",data?.images?.[0].url);
+  
+
   useEffect(() => {
-      getUserName(myUid).then(name => setMyName(name || ''));
+    getUserName(myUid).then(name => setMyName(name || ''));
   }, [myUid]);
 
   const receiverIds = isGroup
@@ -23,14 +29,11 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
 
   const updateTypingStatus = async (isTyping) => {
     try {
-      setTypingStatus(chatroomId,myUid,isTyping);
+      setTypingStatus(chatroomId, myUid, isTyping);
     } catch (error) {
       console.log('typing update error:', error);
     }
   };
-
-  const urlMatch = message.match(/(https?:\/\/[^\s]+)/g);
-  const urlPreview = urlMatch ? urlMatch[0] : null;
 
   const handleTextChange = (text) => {
     setMessage(text);
@@ -61,7 +64,7 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
 
   useEffect(() => {
     const resetUnread = async () => {
-      resetUnreadCount(chatroomId,myUid);
+      resetUnreadCount(chatroomId, myUid);
     }
     resetUnread();
   }, [myUid]);
@@ -81,6 +84,17 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
     const msgText = message;
     const messageId = generateId(chatroomId); //created random ID to match it with firebase message ID
     // const tempId = `temp_${Date.now()}`;
+    // Fetch link preview metadata dynamically
+    let fetchedUrlPreview = null;
+    if (urlPreview && data) {  // only set if data actually loaded
+      fetchedUrlPreview = {
+        url: data?.url || urlPreview,
+        title: data?.title || '',
+        description: data?.description || '',
+        image: data?.images?.[0].url || '',
+        siteName: data?.siteName || '',
+      };
+    }
     const optimisticMsg = {
       id: messageId,
       text: msgText,
@@ -92,11 +106,12 @@ const TypeBox = ({ chatroomId, setPreviewUrl, otherUserId, onAddLocalMessage, on
       },
       status: 'pending',
       isLocal: true,
+      ...(fetchedUrlPreview && { urlPreview: fetchedUrlPreview }),
     };
     onAddLocalMessage(optimisticMsg);
     try {
       setIsSending(true);
-      await sendMessage(messageId,chatroomId, message, myUid, myName, isGroup ? receiverIds : otherUserId, replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null, urlPreview);
+      await sendMessage(messageId, chatroomId, message, myUid, myName, isGroup ? receiverIds : otherUserId, replyTo ? { id: replyTo.id, text: replyTo.text, senderName: replyTo.senderName } : null, fetchedUrlPreview);
       setReplyTo(null);
       onRemoveLocalMessage(messageId);
       setMessage('');

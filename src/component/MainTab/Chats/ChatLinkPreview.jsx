@@ -6,19 +6,20 @@ const ChatLinkPreview = ({ urlPreview }) => {
     return (
         <View
             pointerEvents='none'
-            // activeOpacity={0.8}
             style={styles.linkPreviewContainer}
         >
-            {urlPreview.image && (
+            {urlPreview?.image && (
                 <Image
-                    source={{ uri: urlPreview.image }}
+                    source={{ uri: urlPreview?.image }}
                     style={styles.linkPreviewImage}
+                    resizeMode='stretch'
                 />
             )}
 
             <View style={styles.linkPreviewTextContainer}>
                 <Text
                     numberOfLines={1}
+                    ellipsizeMode='tail'
                     style={styles.linkPreviewTitle}
                 >
                     {urlPreview.title}
@@ -26,6 +27,7 @@ const ChatLinkPreview = ({ urlPreview }) => {
 
                 <Text
                     numberOfLines={2}
+                    ellipsizeMode='tail'
                     style={styles.linkPreviewDesc}
                 >
                     {urlPreview.description}
@@ -41,37 +43,50 @@ const ChatLinkPreview = ({ urlPreview }) => {
 const styles = StyleSheet.create({
     linkPreviewContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 8,
-        backgroundColor: '#fff',
-        padding: 4,
-        maxWidth: '99%'
+        width: 260, // fixed width like WhatsApp
+        maxWidth: '100%',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 12,
+        overflow: 'hidden',
+        borderWidth: 0.5,
+        borderColor: '#ddd',
+        marginTop: 4,
     },
-linkPreviewImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 6,
-    resizeMode: 'cover',
-},
+
+    linkPreviewImage: {
+        width: 80,
+        height: 80,
+        resizeMode: 'cover',
+        backgroundColor: '#e5e5e5',
+    },
+
     linkPreviewTextContainer: {
-        marginLeft: 8,
+        flex: 1,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
         justifyContent: 'center',
+        minWidth: 0, // VERY IMPORTANT for text truncation
     },
+
     linkPreviewTitle: {
         fontSize: 13,
-        fontWeight: 'bold',
-        color: colors.secondary,
+        fontWeight: '700',
+        color: '#111',
+        marginBottom: 3,
     },
+
     linkPreviewDesc: {
         fontSize: 11,
-        maxWidth:140,
         color: '#666',
+        lineHeight: 15,
     },
+
     linkPreviewUrl: {
-    fontSize: 10,
-    color: '#999',
-    marginTop: 2,
-},
+        fontSize: 10,
+        color: '#777',
+        marginTop: 6,
+        fontWeight: '600',
+    },
 })
 
 export default ChatLinkPreview
